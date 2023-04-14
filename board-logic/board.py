@@ -1,39 +1,31 @@
 import datetime
 
+
 class Board:
     BOARD_LENGTH = 8
+    ACROSS_BOARD = BOARD_LENGTH ** 2 - BOARD_LENGTH
+
     def __init__(self):
-        # black pieces
-        # pawns
-        self.black_pawns = 255 << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
-        # rooks
-        self.black_rooks = 1 << self.BOARD_LENGTH * (self.BOARD_LENGTH - 1)
-        self.black_rooks |= 1 << self.BOARD_LENGTH * self.BOARD_LENGTH - 1
-        # knights
-        self.black_knights = 1 << self.BOARD_LENGTH * (self.BOARD_LENGTH - 1) + 1
-        self.black_knights |= 1 << self.BOARD_LENGTH * self.BOARD_LENGTH - 2
-        # bishops
-        self.black_bishops = 1 << self.BOARD_LENGTH * (self.BOARD_LENGTH - 1) + 2
-        self.black_bishops |= 1 << self.BOARD_LENGTH * self.BOARD_LENGTH - 3
-        # royalty
-        self.black_king = 1 << self.BOARD_LENGTH * (self.BOARD_LENGTH - 1) + 4
-        self.black_queens = 1 << self.BOARD_LENGTH * self.BOARD_LENGTH - 5
+
+        # total board
+        self.board = 0xffff << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
+        self.board |= 0xffff
 
         # white pieces
-        # pawns
-        self.white_pawns = 255 << self.BOARD_LENGTH
-        # rooks
-        self.white_rooks = 1
-        self.white_rooks |= 1 << self.BOARD_LENGTH - 1
-        # knights
-        self.white_knights = 1 << 1
-        self.white_knights |= 1 << self.BOARD_LENGTH - 2
-        # bishops
-        self.white_bishops = 1 << 2
-        self.white_bishops |= 1 << self.BOARD_LENGTH - 3
-        # royalty
-        self.white_queens = 1 << 3
-        self.white_king = 1 << 4
+        self.white_pawns = 0xff << self.BOARD_LENGTH
+        self.white_rooks = 0x81
+        self.white_knights = 0x42
+        self.white_bishops = 0x24
+        self.white_king = 0x10
+        self.white_queens = 0x8
+
+        # black pieces
+        self.black_pawns = 0xff << self.ACROSS_BOARD >> self.BOARD_LENGTH
+        self.black_rooks = 0x81 << self.ACROSS_BOARD
+        self.black_knights = 0x42 << self.ACROSS_BOARD
+        self.black_bishops = 0x24 << self.ACROSS_BOARD
+        self.black_king = 0x10 << self.ACROSS_BOARD
+        self.black_queens = 0x8 << self.ACROSS_BOARD
 
     def set_piece(self, piece, square):
         if type(square) == str:
@@ -99,7 +91,7 @@ class Board:
         elif self.black_pawns & mask:
             return 'p'
         return ' '
-    
+
     def move_piece(self, from_square, to_square):
         pass
 
@@ -107,19 +99,20 @@ class Board:
         file = ord(square[0]) - ord('a')
         rank = int(square[1]) - 1
 
-        if file < 0 or file > 7 or rank < 0 or rank > 7:
+        if file < 0 or file > self.board - 1 or rank < 0 or rank > self.board - 1:
             raise ValueError("Invalid square notation")
-        
+
         return rank * self.BOARD_LENGTH + file
 
     def get_board_string(self):
-        board_str = ''
+        board_str = []
 
-        for row in range(8):
-            for col in range(8):
-                board_str += self.get_piece(row * 8 + col) + ' '
-            board_str += '\n'
-        return board_str
+        for row in range(self.BOARD_LENGTH):
+            for col in range(self.BOARD_LENGTH-1, -1, -1):
+                board_str.append(self.get_piece(
+                    row * self.BOARD_LENGTH + col) + ' ')
+            board_str.append('\n')
+        return ''.join(board_str[::-1])
 
 
 if __name__ == "__main__":
