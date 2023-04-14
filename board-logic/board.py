@@ -218,7 +218,11 @@ class Board:
 
         # return bitwise index of given square
         return rank * self.BOARD_LENGTH + file
-
+    
+    def _index_to_square(self, index):
+        row = self.BOARD_LENGTH - index // self.BOARD_LENGTH
+        col = index % self.BOARD_LENGTH
+        return chr(ord('a') + col) + str(row)
     '''
         returns the board as a string
         
