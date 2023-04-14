@@ -150,7 +150,14 @@ class Board:
             return 'p'
         return ' '
 
+    '''
+        moves the piece from cell 'from_square' to the cell 'to_square'
+
+    '''
     def move_piece(self, from_square, to_square):
+        # convert squares to indexes
+        # check to_square
+        # update boards
         pass
 
     '''
