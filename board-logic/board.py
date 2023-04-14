@@ -41,10 +41,12 @@ class Board:
         # globals
         self.BOARD_LENGTH = 8
         self.ACROSS_BOARD = self.BOARD_LENGTH ** 2 - self.BOARD_LENGTH
+        self.EMPTY = ' '
 
         # total board
-        self.board = 0xffff << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
-        self.board |= 0xffff
+        self.black_pieces = 0xffff << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
+        self.white_pieces = 0xffff
+        self.board = self.black_pieces | self.white_pieces
 
         # sub-boards
         # white pieces
@@ -108,6 +110,7 @@ class Board:
             elif piece == 'p':
                 self.black_pawns |= mask
 
+
     '''
         gets the piece in the given square or index
 
@@ -117,13 +120,13 @@ class Board:
         RETURNS
         a character in the set of pieces if that piece is in the cell, the empty character otherwise
     '''
-
     def get_piece(self, square):
         if type(square) == str:
             index = self._square_to_index(square)
         else:
             index = square
         mask = 1 << index
+        
         if self.white_king & mask:
             return 'K'
         elif self.white_queens & mask:
@@ -148,7 +151,7 @@ class Board:
             return 'n'
         elif self.black_pawns & mask:
             return 'p'
-        return ' '
+        return self.EMPTY
 
     '''
         moves the piece from cell 'from_square' to the cell 'to_square'
@@ -159,6 +162,40 @@ class Board:
         # check to_square
         # update boards
         pass
+
+    def get_moves(self, square):
+        moves = []
+        index = self._square_to_index(square)
+        piece = self.get_piece(index)
+        
+        if piece == self.EMPTY:
+            return moves
+        
+        other_player_pieces = self._piece_color(piece.lower() if piece.isupper() else piece.upper())
+        
+        # Generate moves based on piece type
+        if piece in ('P', 'p'):
+            # check for move one square forward
+            if self.get_piece(index << 8) == self.EMPTY:
+                moves.append()
+            # check for move two squares forward
+            # check for attack on left
+            # check for attack on right
+        # elif piece in ('N', 'n'):
+        #     moves = self._get_knight_moves(index)
+        # elif piece in ('B', 'b'):
+        #     moves = self._get_bishop_moves(index)
+        # elif piece in ('R', 'r'):
+        #     moves = self._get_rook_moves(index)
+        # elif piece in ('Q', 'q'):
+        #     moves = self._get_queen_moves(index)
+        # elif piece in ('K', 'k'):
+        #     moves = self._get_king_moves(index)
+
+        return moves
+    
+    def _piece_color(self, piece):
+        return self.white_pieces if piece in ('KQRNBP') else self.black_pieces
 
     '''
         A method to convert a given square into an index
