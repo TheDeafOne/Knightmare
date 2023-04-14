@@ -126,31 +126,32 @@ class Board:
         else:
             index = square
         mask = 1 << index
-        
-        if self.white_king & mask:
-            return 'K'
-        elif self.white_queens & mask:
-            return 'Q'
-        elif self.white_rooks & mask:
-            return 'R'
-        elif self.white_bishops & mask:
-            return 'B'
-        elif self.white_knights & mask:
-            return 'N'
-        elif self.white_pawns & mask:
-            return 'P'
-        elif self.black_king & mask:
-            return 'k'
-        elif self.black_queens & mask:
-            return 'q'
-        elif self.black_rooks & mask:
-            return 'r'
-        elif self.black_bishops & mask:
-            return 'b'
-        elif self.black_knights & mask:
-            return 'n'
-        elif self.black_pawns & mask:
-            return 'p'
+        if self.white_pieces & mask:
+            if self.white_king & mask:
+                return 'K'
+            elif self.white_queens & mask:
+                return 'Q'
+            elif self.white_rooks & mask:
+                return 'R'
+            elif self.white_bishops & mask:
+                return 'B'
+            elif self.white_knights & mask:
+                return 'N'
+            elif self.white_pawns & mask:
+                return 'P'
+        else:
+            if self.black_king & mask:
+                return 'k'
+            elif self.black_queens & mask:
+                return 'q'
+            elif self.black_rooks & mask:
+                return 'r'
+            elif self.black_bishops & mask:
+                return 'b'
+            elif self.black_knights & mask:
+                return 'n'
+            elif self.black_pawns & mask:
+                return 'p'
         return self.EMPTY
 
     '''
