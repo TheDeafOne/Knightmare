@@ -2,15 +2,51 @@ import datetime
 
 
 class Board:
-    BOARD_LENGTH = 8
-    ACROSS_BOARD = BOARD_LENGTH ** 2 - BOARD_LENGTH
+    '''
+        A class used to manage a chess board using the piece-centric bitboard representation
+        Each unique chess piece type (e.g. black queen, white rooks, etc.) have their own 64 bit integer representing the 
+        location of those pieces. This integer is called a sub-board since it is a subset of all the piece locations.
+
+        As an example, the locations of the black pawns for the initial board would be reprsented by the integer 65280, 
+        which has a binary value of 0b1111111100000000, and can be viewed as the following:
+        0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0
+        0 0 0 0 0 0 0 0
+        1 1 1 1 1 1 1 1
+        0 0 0 0 0 0 0 0
+
+        ATTRIBUTES
+        BOARD_LENGTH: an integer indicating the length of a standard chess board
+        ACROSS_BOARD: an integer representing the number of cells from one side of the board to other
+        board: a 64 bit integer whose bits represent the location of pieces (1 if a piece is on that cell, 0 otherwise)
+        white_pawns: a 64 bit integer whose bits represent the location of the white pawns
+        white_rooks: a 64 bit integer whose bits represent the location of the white rooks
+        white_knights: a 64 bit integer whos bits represent the location of the white knights
+        white_bishops: a 64 bit integer whose bits represent the location of the white bishops
+        white_queens: a 64 bit integer whose bits represent the location of the white queens
+        white_king: a 64 bit integer whose bits represent the location of the white king
+
+        black_pawns: a 64 bit integer whose bits represent the location of the black pawns
+        black_rooks: a 64 bit integer whose bits represent the location of the black rooks
+        black_knights: a 64 bit integer whose bits represent the location of the black knights
+        black_bishops: a 64 bit integer whose bits represent the location of the black bishops
+        black_queens: a 64 bit integer whose bits represent the location of the black queens
+        black_king: a 64 bit integer whose bits represent the location of the black king
+    '''
 
     def __init__(self):
+        # globals
+        self.BOARD_LENGTH = 8
+        self.ACROSS_BOARD = self.BOARD_LENGTH ** 2 - self.BOARD_LENGTH
 
         # total board
         self.board = 0xffff << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
         self.board |= 0xffff
 
+        # sub-boards
         # white pieces
         self.white_pawns = 0xff << self.BOARD_LENGTH
         self.white_rooks = 0x81
@@ -27,12 +63,24 @@ class Board:
         self.black_king = 0x10 << self.ACROSS_BOARD
         self.black_queens = 0x8 << self.ACROSS_BOARD
 
+    '''
+        sets a given piece to a given square
+
+        PARAMS
+        piece: a character identifying the type of chess piece (e.g. 'K' for white King, 'Q' for white Queen, etc.)
+        square: string or integer index identifying the cell on the board needing to be set
+    '''
+
     def set_piece(self, piece, square):
         if type(square) == str:
             index = self._square_to_index(square)
         else:
             index = square
+
+        # set piece location in temporary mask
         mask = 1 << index
+
+        # check if piece location corresponds with any of the sub-boards
         if piece.isupper():
             if piece == 'K':
                 self.white_king |= mask
@@ -59,6 +107,16 @@ class Board:
                 self.black_knights |= mask
             elif piece == 'p':
                 self.black_pawns |= mask
+
+    '''
+        gets the piece in the given square or index
+
+        PARAMS
+        square: string or integer index identifying the cell on the board to return
+
+        RETURNS
+        a character in the set of pieces if that piece is in the cell, the empty character otherwise
+    '''
 
     def get_piece(self, square):
         if type(square) == str:
@@ -95,23 +153,46 @@ class Board:
     def move_piece(self, from_square, to_square):
         pass
 
+    '''
+        A method to convert a given square into an index
+
+        PARAMS
+        square: string identifying the cell on the board to return
+
+        RETURNS
+        index value of the square on the board
+    '''
+
     def _square_to_index(self, square):
+        # get index equivalent of characters
         file = ord(square[0]) - ord('a')
         rank = int(square[1]) - 1
 
+        # validate index
         if file < 0 or file > self.board - 1 or rank < 0 or rank > self.board - 1:
             raise ValueError("Invalid square notation")
 
+        # return bitwise index of given square
         return rank * self.BOARD_LENGTH + file
+
+    '''
+        returns the board as a string
+        
+        RETURNS
+        string representing the board
+    '''
 
     def get_board_string(self):
         board_str = []
 
+        # cycle through board cells and append what the cell contains
         for row in range(self.BOARD_LENGTH):
             for col in range(self.BOARD_LENGTH-1, -1, -1):
                 board_str.append(self.get_piece(
                     row * self.BOARD_LENGTH + col) + ' ')
             board_str.append('\n')
+        board_str = board_str[:-1]  # remove trailing new line
+
         return ''.join(board_str[::-1])
 
 
