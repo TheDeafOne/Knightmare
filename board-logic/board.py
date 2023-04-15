@@ -48,6 +48,7 @@ class Board:
             (self.BOARD_LENGTH - 2)
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
+        self.en_passant_board = 0
 
         # sub-boards
         # white pieces
@@ -190,16 +191,7 @@ class Board:
 
         # Generate moves based on piece type
         if piece == self.WHITE_PAWN_LABEL:
-            # check for move one square forward
-            if self.get_piece(index << self.BOARD_LENGTH) == self.EMPTY:
-                moves.append((square, self._index_to_square(index << 8)))
-
-                if self.get_piece(index << self.BOARD_LENGTH * 2) == self.EMPTY:
-                    moves.append((square, self._index_to_square(index << self.BOARD_LENGTH * 2)))
-
-            # check for move two squares forward
-            # check for attack on left
-            # check for attack on right
+            moves.extend(self.get_pawn_moves(square))
         # elif piece in ('N', 'n'):
         #     moves = self._get_knight_moves(index)
         # elif piece in (self.WHITE_BISHOP_LABEL, 'b'):
@@ -210,6 +202,60 @@ class Board:
         #     moves = self._get_queen_moves(index)
         # elif piece in (self.WHITE_KING_LABEL, self.BLACK_KING_LABEL):
         #     moves = self._get_king_moves(index)
+
+        return moves
+
+    def get_pawn_moves(self, square):
+        moves = []
+        index = self._square_to_index(square)
+        mask = 1 << index
+        
+        # check if piece is white
+        if mask & self.white_pieces:
+            # Check one square forward
+            if not self.board & (mask << 8):
+                print(index)
+                print(index+8)
+                moves.append(self._index_to_square(index + 8))
+
+                # Check two squares forward on first move
+                if index < 16 and not self.board & (mask << 16):
+                    moves.append(self._index_to_square(mask << 16))
+
+            # Check diagonal captures
+            if index % 8 < 7 and self.black_pieces & (mask << 9):
+                moves.append(self._index_to_square(index + 9))
+            if index % 8 > 0 and self.black_pieces & (mask << 7):
+                moves.append(self._index_to_square(index + 7))
+
+            # Check en passant capture
+            if self.en_passant_board & index:
+                if index % 8 < 7 and self.black_pieces & (mask << 9):
+                    moves.append(self._index_to_square(index + 9))
+                if index % 8 > 0 and self.black_pieces & (mask << 7):
+                    moves.append(self._index_to_square(index + 7))
+
+        else:
+            # Check one square forward
+            if not self.black_pieces & (mask >> 8):
+                moves.append(self._index_to_square(index - 8))
+
+                # Check two squares forward on first move
+                if index > 47 and not self.black_pieces & (mask >> 16):
+                    moves.append(self._index_to_square(index - 16))
+
+            # Check diagonal captures
+            if index % 8 < 7 and self.white_pieces & (mask >> 7):
+                moves.append(self._index_to_square(index - 7))
+            if index % 8 > 0 and self.white_pieces & (mask >> 9):
+                moves.append(self._index_to_square(index - 9))
+
+            # Check en passant capture
+            if self.en_passant_board & index:
+                if index % 8 < 7 and self.white_pieces & (mask >> 7):
+                    moves.append(self._index_to_square(index - 7))
+                if index % 8 > 0 and self.white_pieces & (mask >> 9):
+                    moves.append(self._index_to_square(index - 9))
 
         return moves
 
@@ -239,7 +285,7 @@ class Board:
         return rank * self.BOARD_LENGTH + file
 
     def _index_to_square(self, index):
-        row = self.BOARD_LENGTH - index // self.BOARD_LENGTH
+        row = index // self.BOARD_LENGTH + 1
         col = index % self.BOARD_LENGTH
         return chr(ord('a') + col) + str(row)
 
@@ -253,13 +299,15 @@ class Board:
     def get_board_string(self):
         board_str = []
 
-        # cycle through board cells and append what the cell contains
+        # cycle through board cells and append what the cell 
         for row in range(self.BOARD_LENGTH):
             for col in range(self.BOARD_LENGTH-1, -1, -1):
                 board_str.append(self.get_piece(
                     row * self.BOARD_LENGTH + col) + ' ')
+            board_str.append(str(row+1) + '| ')
             board_str.append('\n')
         board_str = board_str[:-1]  # remove trailing new line
+        board_str.append('   ' + '\033[4m' + 'a b c d e f g h' +  '\033[0m \n')
 
         return ''.join(board_str[::-1])
 
@@ -269,5 +317,12 @@ if __name__ == "__main__":
     board = Board()
     end = datetime.datetime.now()
     delta = end - start
+    
     print(delta.total_seconds())
-    print(board.get_board_string())
+    print(board.get_piece('e2'))
+    print(board.get_moves('e2'))
+    # v = board._square_to_index('h1')
+    # print(board.get_board_string())
+    # v2 = board._index_to_square(v)
+    # print(v)
+    # print(v2)
