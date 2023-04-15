@@ -50,6 +50,13 @@ class Board:
 
         # sub-boards
         # white pieces
+        self.WHITE_PAWN_LABEL = 'P'
+        self.WHITE_ROOK_LABEL = 'R'
+        self.WHITE_KNIGHT_LABEL = 'N'
+        self.WHITE_BISHOP_LABEL = 'B'
+        self.WHITE_QUEEN_LABEL = 'Q'
+        self.WHITE_KING_LABEL = 'K'
+
         self.white_pawns = 0xff << self.BOARD_LENGTH
         self.white_rooks = 0x81
         self.white_knights = 0x42
@@ -58,6 +65,13 @@ class Board:
         self.white_queens = 0x8
 
         # black pieces
+        self.BLACK_PAWN_LABEL = 'p'
+        self.BLACK_ROOK_LABEL = 'r'
+        self.BLACK_KNIGHT_LABEL = 'n'
+        self.BLACK_BISHOP_LABEL = 'b'
+        self.BLACK_QUEEN_LABEL = 'q'
+        self.BLACK_KING_LABEL = 'k'
+        
         self.black_pawns = 0xff << self.ACROSS_BOARD >> self.BOARD_LENGTH
         self.black_rooks = 0x81 << self.ACROSS_BOARD
         self.black_knights = 0x42 << self.ACROSS_BOARD
@@ -128,30 +142,30 @@ class Board:
         mask = 1 << index
         if self.white_pieces & mask:
             if self.white_king & mask:
-                return 'K'
+                return self.WHITE_KING_LABEL
             elif self.white_queens & mask:
-                return 'Q'
+                return self.WHITE_QUEEN_LABEL
             elif self.white_rooks & mask:
-                return 'R'
+                return self.WHITE_ROOK_LABEL
             elif self.white_bishops & mask:
-                return 'B'
+                return self.WHITE_BISHOP_LABEL
             elif self.white_knights & mask:
-                return 'N'
+                return self.WHITE_KNIGHT_LABEL
             elif self.white_pawns & mask:
-                return 'P'
+                return self.WHITE_PAWN_LABEL
         else:
             if self.black_king & mask:
-                return 'k'
+                return self.BLACK_KING_LABEL
             elif self.black_queens & mask:
-                return 'q'
+                return self.BLACK_QUEEN_LABEL
             elif self.black_rooks & mask:
-                return 'r'
+                return self.BLACK_ROOK_LABEL
             elif self.black_bishops & mask:
-                return 'b'
+                return self.BLACK_BISHOP_LABEL
             elif self.black_knights & mask:
-                return 'n'
+                return self.BLACK_KNIGHT_LABEL
             elif self.black_pawns & mask:
-                return 'p'
+                return self.BLACK_PAWN_LABEL
         return self.EMPTY
 
     '''
@@ -172,13 +186,15 @@ class Board:
         if piece == self.EMPTY:
             return moves
         
-        other_player_pieces = self._piece_color(piece.lower() if piece.isupper() else piece.upper())
         
         # Generate moves based on piece type
-        if piece in ('P', 'p'):
+        if piece == 'P':
             # check for move one square forward
-            if self.get_piece(index << 8) == self.EMPTY:
-                moves.append()
+            if self.get_piece(index << self.BOARD_LENGTH) == self.EMPTY:
+                moves.append((square, self._index_to_square(index << 8)))
+
+                if self.get_piece(index << self.BOARD_LENGTH * 2) == self.EMPTY:
+                    moves.append((square, self._index_to_square))
             # check for move two squares forward
             # check for attack on left
             # check for attack on right
