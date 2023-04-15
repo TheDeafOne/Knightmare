@@ -103,7 +103,7 @@ class Board:
         if piece == self.EMPTY:
             # update main board
             self.board ^= mask
-            
+
             # update white pieces
             self.white_pieces ^= mask
             self.white_pawns ^= mask
@@ -215,9 +215,11 @@ class Board:
 
         # Generate moves based on piece type
         if piece == self.WHITE_PAWN_LABEL or piece == self.BLACK_PAWN_LABEL:
-            moves.extend(map(lambda x: (square, x), self.get_pawn_moves(square)))
-        # elif piece in ('N', 'n'):
-        #     moves = self._get_knight_moves(index)
+            moves.extend(map(lambda x: (square, x),
+                         self.get_pawn_moves(index)))
+        elif piece == self.WHITE_KNIGHT_LABEL or piece == self.BLACK_KNIGHT_LABEL:
+            moves.extend(map(lambda x: (square, x),
+                         self.get_knight_moves(index)))
         # elif piece in (self.WHITE_BISHOP_LABEL, 'b'):
         #     moves = self._get_bishop_moves(index)
         # elif piece in (self.WHITE_ROOK_LABEL, 'r'):
@@ -229,11 +231,12 @@ class Board:
 
         return moves
 
-    def get_pawn_moves(self, square):
+    def get_pawn_moves(self, index):
         moves = []
-        index = self._square_to_index(square)
         mask = 1 << index
-        
+
+    
+
         # check if piece is white
         if mask & self.white_pieces:
             # Check one square forward
@@ -281,8 +284,77 @@ class Board:
 
         return moves
 
-    def _piece_color(self, piece):
+    '''
+        Generates all the possible moves for a knight in a given square
+
+        Note the difference knight move types are referenced to as follows:
+        * right down: two squares right, one square down
+        * right up: two squares right, one square up
+        * left down: two squares left, one square down
+        * left up: two squares left, one square up
+        * down left: two squares down, one square left
+        * down right: two squares down, one square right
+        * up left: two squares up, one square left
+        * up right: two squares up, one square right
+
+        PARAMS
+        index: an integer representing the square that the piece is located in
+
+        RETURNS
+        all the possible knight moves for the piece in the given square, given as a list of square indexes
+    '''
+
+    def get_knight_moves(self, index):
+        moves = []
+        mask = 1 << index
+
+        piece_color = self._get_piece_color(self.get_piece(index))
+
+        # right L shape moves
+        # validate column moveable position
+        if index % 8 < 6:
+            # validate row moveable position 
+            if index // 8 > 0 and not mask >> 6 & piece_color:
+                # right down
+                moves.append(self._index_to_square(index - 6))
+            if index // 8 < 7 and not mask << 10 & piece_color:
+                # right up
+                moves.append(self._index_to_square(index + 10))
+
+        # left L shape moves
+        if index % 8 > 1:
+            if index // 8 > 0 and not mask >> 10 & piece_color:
+                # left down
+                moves.append(self._index_to_square(index - 10))
+            if index // 8 < 7 and not mask << 6 & piece_color:
+                # left up
+                moves.append(self._index_to_square(index + 6))
+
+        # up L shape moves
+        if index // 8 > 1:
+            if index % 8 > 0 and not mask >> 17 & piece_color:
+                # down left
+                moves.append(self._index_to_square(index - 17))
+            if index % 8 < 7 and not mask >> 15 & piece_color:
+                # down right
+                moves.append(self._index_to_square(index - 15))
+
+        # down L shape moves
+        if index // 8 < 6:
+            if index % 8 > 0 and not mask << 15 & piece_color:
+                # up left
+                moves.append(self._index_to_square(index + 15))
+            if index % 8 < 7 and not mask << 17 & piece_color:
+                # up right
+                moves.append(self._index_to_square(index + 17))
+
+        return moves
+
+    def _get_piece_color(self, piece):
         return self.white_pieces if piece in ('KQRNBP') else self.black_pieces
+
+    def _get_other_piece_color(self, piece):
+        return self.black_pieces if piece in ('KQRNBP') else self.white_pieces
 
     '''
         A method to convert a given square into an index
@@ -321,14 +393,15 @@ class Board:
     def get_board_string(self):
         board_str = []
 
-        # cycle through board cells and append what the cell 
+        # cycle through board cells and append what the cell
         for row in range(self.BOARD_LENGTH):
             for col in range(self.BOARD_LENGTH-1, -1, -1):
-                board_str.append(self.get_piece(row * self.BOARD_LENGTH + col) + ' ')
+                board_str.append(self.get_piece(
+                    row * self.BOARD_LENGTH + col) + ' ')
             board_str.append(str(row+1) + '| ')
             board_str.append('\n')
         board_str = board_str[:-1]  # remove trailing new line
-        board_str.append('   ' + '\033[4m' + 'a b c d e f g h' +  '\033[0m \n')
+        board_str.append('   ' + '\033[4m' + 'a b c d e f g h' + '\033[0m \n')
 
         return ''.join(board_str[::-1])
 
@@ -338,14 +411,10 @@ if __name__ == "__main__":
     board = Board()
     end = datetime.datetime.now()
     delta = end - start
-    
+
     print(delta.total_seconds())
 
-    board.set_piece('p','b4')
-    board.set_piece('p','d4')
-    board.set_piece('P','c4')
-    board.set_piece('P','c3')
-    board.en_passant_board |= 1 << board._square_to_index('b4')
-    board.en_passant_board |= 1 << board._square_to_index('d4')
+    board.set_piece('n', 'h3')
+
     print(board.get_board_string())
-    print(board.get_moves('d4'))
+    print(board.get_moves('h3'))
