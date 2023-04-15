@@ -122,6 +122,7 @@ class Board:
             self.black_queens &= ~mask
 
         if piece.isupper():
+            self.white_pieces |= mask
             if piece == self.WHITE_KING_LABEL:
                 self.white_king |= mask
             elif piece == self.WHITE_QUEEN_LABEL:
@@ -135,6 +136,7 @@ class Board:
             elif piece == self.WHITE_PAWN_LABEL:
                 self.white_pawns |= mask
         else:
+            self.black_pieces |= mask
             if piece == self.BLACK_KING_LABEL:
                 self.black_king |= mask
             elif piece == self.BLACK_QUEEN_LABEL:
@@ -213,7 +215,7 @@ class Board:
 
         # Generate moves based on piece type
         if piece == self.WHITE_PAWN_LABEL:
-            moves.extend(self.get_pawn_moves(square))
+            moves.extend(map(lambda x: (square, x), self.get_pawn_moves(square)))
         # elif piece in ('N', 'n'):
         #     moves = self._get_knight_moves(index)
         # elif piece in (self.WHITE_BISHOP_LABEL, 'b'):
@@ -322,8 +324,7 @@ class Board:
         # cycle through board cells and append what the cell 
         for row in range(self.BOARD_LENGTH):
             for col in range(self.BOARD_LENGTH-1, -1, -1):
-                board_str.append(self.get_piece(
-                    row * self.BOARD_LENGTH + col) + ' ')
+                board_str.append(self.get_piece(row * self.BOARD_LENGTH + col) + ' ')
             board_str.append(str(row+1) + '| ')
             board_str.append('\n')
         board_str = board_str[:-1]  # remove trailing new line
@@ -339,12 +340,6 @@ if __name__ == "__main__":
     delta = end - start
     
     print(delta.total_seconds())
+    board.set_piece('P','f4')
+    
     print(board.get_board_string())
-    print(board.get_piece('e2'))
-    print(board.get_moves('e2'))
-
-
-    # v = board._square_to_index('h1')
-    # v2 = board._index_to_square(v)
-    # print(v)
-    # print(v2)
