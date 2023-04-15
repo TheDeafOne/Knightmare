@@ -99,6 +99,28 @@ class Board:
         mask = 1 << index
 
         # check if piece location corresponds with any of the sub-boards
+        if piece == self.EMPTY:
+            # update main board
+            self.board &= ~mask
+            
+            # update white pieces
+            self.white_pieces &= ~mask
+            self.white_pawns &= ~mask
+            self.white_rooks &= ~mask
+            self.white_knights &= ~mask
+            self.white_bishops &= ~mask
+            self.white_king &= ~mask
+            self.white_queens &= ~mask
+
+            # update black pieces
+            self.black_pieces &= ~mask
+            self.black_pawns &= ~mask
+            self.black_rooks &= ~mask
+            self.black_knights &= ~mask
+            self.black_bishops &= ~mask
+            self.black_king &= ~mask
+            self.black_queens &= ~mask
+
         if piece.isupper():
             if piece == self.WHITE_KING_LABEL:
                 self.white_king |= mask
@@ -320,7 +342,8 @@ if __name__ == "__main__":
     print(board.get_board_string())
     print(board.get_piece('e2'))
     print(board.get_moves('e2'))
-    
+
+
     # v = board._square_to_index('h1')
     # v2 = board._index_to_square(v)
     # print(v)
