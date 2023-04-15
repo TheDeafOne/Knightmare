@@ -238,7 +238,6 @@ class Board:
         if mask & self.white_pieces:
             # Check one square forward
             if not self.board & (mask << 8):
-                print(square)
                 moves.append(self._index_to_square(index + 8))
 
                 # Check two squares forward on first move
@@ -275,9 +274,9 @@ class Board:
 
             # Check en passant capture
             if self.en_passant_board & mask:
-                if index % 8 < 7 and self.white_pieces & (mask >> 7):
+                if index % 8 < 7 and self.white_pieces & (mask << 1):
                     moves.append(self._index_to_square(index - 7))
-                if index % 8 > 0 and self.white_pieces & (mask >> 9):
+                if index % 8 > 0 and self.white_pieces & (mask >> 1):
                     moves.append(self._index_to_square(index - 9))
 
         return moves
@@ -342,9 +341,11 @@ if __name__ == "__main__":
     
     print(delta.total_seconds())
 
-    board.set_piece('p','b5')
-    board.set_piece('p','a5')
-    board.set_piece('P','a4')
-    # board.en_passant_board |= 1 << board._square_to_index('f5')
+    board.set_piece('p','b4')
+    board.set_piece('p','d4')
+    board.set_piece('P','c4')
+    board.set_piece('P','c3')
+    board.en_passant_board |= 1 << board._square_to_index('b4')
+    board.en_passant_board |= 1 << board._square_to_index('d4')
     print(board.get_board_string())
-    print(board.get_moves('a4'))
+    print(board.get_moves('d4'))
