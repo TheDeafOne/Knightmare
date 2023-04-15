@@ -44,7 +44,8 @@ class Board:
         self.EMPTY = ' '
 
         # total board
-        self.black_pieces = 0xffff << self.BOARD_LENGTH * (self.BOARD_LENGTH - 2)
+        self.black_pieces = 0xffff << self.BOARD_LENGTH * \
+            (self.BOARD_LENGTH - 2)
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
 
@@ -71,7 +72,7 @@ class Board:
         self.BLACK_BISHOP_LABEL = 'b'
         self.BLACK_QUEEN_LABEL = 'q'
         self.BLACK_KING_LABEL = 'k'
-        
+
         self.black_pawns = 0xff << self.ACROSS_BOARD >> self.BOARD_LENGTH
         self.black_rooks = 0x81 << self.ACROSS_BOARD
         self.black_knights = 0x42 << self.ACROSS_BOARD
@@ -83,7 +84,7 @@ class Board:
         sets a given piece to a given square
 
         PARAMS
-        piece: a character identifying the type of chess piece (e.g. 'K' for white King, 'Q' for white Queen, etc.)
+        piece: a character identifying the type of chess piece (e.g. self.WHITE_KING_LABEL for white King, self.WHITE_QUEEN_LABEL for white Queen, etc.)
         square: string or integer index identifying the cell on the board needing to be set
     '''
 
@@ -98,32 +99,31 @@ class Board:
 
         # check if piece location corresponds with any of the sub-boards
         if piece.isupper():
-            if piece == 'K':
+            if piece == self.WHITE_KING_LABEL:
                 self.white_king |= mask
-            elif piece == 'Q':
+            elif piece == self.WHITE_QUEEN_LABEL:
                 self.white_queens |= mask
-            elif piece == 'R':
+            elif piece == self.WHITE_ROOK_LABEL:
                 self.white_rooks |= mask
-            elif piece == 'B':
+            elif piece == self.WHITE_BISHOP_LABEL:
                 self.white_bishops |= mask
-            elif piece == 'N':
+            elif piece == self.WHITE_KNIGHT_LABEL:
                 self.white_knights |= mask
-            elif piece == 'P':
+            elif piece == self.WHITE_PAWN_LABEL:
                 self.white_pawns |= mask
         else:
-            if piece == 'k':
+            if piece == self.BLACK_KING_LABEL:
                 self.black_king |= mask
-            elif piece == 'q':
+            elif piece == self.BLACK_QUEEN_LABEL:
                 self.black_queens |= mask
-            elif piece == 'r':
+            elif piece == self.BLACK_ROOK_LABEL:
                 self.black_rooks |= mask
-            elif piece == 'b':
+            elif piece == self.BLACK_BISHOP_LABEL:
                 self.black_bishops |= mask
-            elif piece == 'n':
+            elif piece == self.BLACK_KNIGHT_LABEL:
                 self.black_knights |= mask
-            elif piece == 'p':
+            elif piece == self.BLACK_PAWN_LABEL:
                 self.black_pawns |= mask
-
 
     '''
         gets the piece in the given square or index
@@ -134,6 +134,7 @@ class Board:
         RETURNS
         a character in the set of pieces if that piece is in the cell, the empty character otherwise
     '''
+
     def get_piece(self, square):
         if type(square) == str:
             index = self._square_to_index(square)
@@ -172,6 +173,7 @@ class Board:
         moves the piece from cell 'from_square' to the cell 'to_square'
 
     '''
+
     def move_piece(self, from_square, to_square):
         # convert squares to indexes
         # check to_square
@@ -182,35 +184,35 @@ class Board:
         moves = []
         index = self._square_to_index(square)
         piece = self.get_piece(index)
-        
+
         if piece == self.EMPTY:
             return moves
-        
-        
+
         # Generate moves based on piece type
-        if piece == 'P':
+        if piece == self.WHITE_PAWN_LABEL:
             # check for move one square forward
             if self.get_piece(index << self.BOARD_LENGTH) == self.EMPTY:
                 moves.append((square, self._index_to_square(index << 8)))
 
                 if self.get_piece(index << self.BOARD_LENGTH * 2) == self.EMPTY:
-                    moves.append((square, self._index_to_square))
+                    moves.append((square, self._index_to_square(index << self.BOARD_LENGTH * 2)))
+
             # check for move two squares forward
             # check for attack on left
             # check for attack on right
         # elif piece in ('N', 'n'):
         #     moves = self._get_knight_moves(index)
-        # elif piece in ('B', 'b'):
+        # elif piece in (self.WHITE_BISHOP_LABEL, 'b'):
         #     moves = self._get_bishop_moves(index)
-        # elif piece in ('R', 'r'):
+        # elif piece in (self.WHITE_ROOK_LABEL, 'r'):
         #     moves = self._get_rook_moves(index)
-        # elif piece in ('Q', 'q'):
+        # elif piece in (self.WHITE_QUEEN_LABEL, self.BLACK_QUEEN_LABEL):
         #     moves = self._get_queen_moves(index)
-        # elif piece in ('K', 'k'):
+        # elif piece in (self.WHITE_KING_LABEL, self.BLACK_KING_LABEL):
         #     moves = self._get_king_moves(index)
 
         return moves
-    
+
     def _piece_color(self, piece):
         return self.white_pieces if piece in ('KQRNBP') else self.black_pieces
 
@@ -235,11 +237,12 @@ class Board:
 
         # return bitwise index of given square
         return rank * self.BOARD_LENGTH + file
-    
+
     def _index_to_square(self, index):
         row = self.BOARD_LENGTH - index // self.BOARD_LENGTH
         col = index % self.BOARD_LENGTH
         return chr(ord('a') + col) + str(row)
+
     '''
         returns the board as a string
         
