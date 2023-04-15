@@ -261,11 +261,11 @@ class Board:
 
         else:
             # Check one square forward
-            if not self.black_pieces & (mask >> 8):
+            if not self.board & (mask >> 8):
                 moves.append(self._index_to_square(index - 8))
 
                 # Check two squares forward on first move
-                if index > 47 and not self.black_pieces & (mask >> 16):
+                if index > 47 and not self.board & (mask >> 16):
                     moves.append(self._index_to_square(index - 16))
 
             # Check diagonal captures
@@ -412,7 +412,7 @@ if __name__ == "__main__":
 
     print(delta.total_seconds())
 
-    board.set_piece('P', 'd6')
+    board.set_piece('p', 'd3')
 
     print(board.get_board_string())
-    print(board.get_moves('d6'))
+    print(board.get_moves('d3'))
