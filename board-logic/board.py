@@ -234,8 +234,7 @@ class Board:
     def get_pawn_moves(self, index):
         moves = []
         mask = 1 << index
-
-    
+        col = index % 8
 
         # check if piece is white
         if mask & self.white_pieces:
@@ -248,16 +247,16 @@ class Board:
                     moves.append(self._index_to_square(index + 16))
 
             # Check diagonal captures
-            if index % 8 < 7 and self.black_pieces & (mask << 9):
+            if col < 7 and self.black_pieces & (mask << 9):
                 moves.append(self._index_to_square(index + 9))
-            if index % 8 > 0 and self.black_pieces & (mask << 7):
+            if col > 0 and self.black_pieces & (mask << 7):
                 moves.append(self._index_to_square(index + 7))
 
             # Check en passant capture
             if self.en_passant_board & mask:
-                if index % 8 < 7 and self.black_pieces & (mask << 1):
+                if col < 7 and self.black_pieces & (mask << 1):
                     moves.append(self._index_to_square(index + 9))
-                if index % 8 > 0 and self.black_pieces & (mask >> 1):
+                if col > 0 and self.black_pieces & (mask >> 1):
                     moves.append(self._index_to_square(index + 7))
 
         else:
@@ -270,16 +269,16 @@ class Board:
                     moves.append(self._index_to_square(index - 16))
 
             # Check diagonal captures
-            if index % 8 < 7 and self.white_pieces & (mask >> 7):
+            if col < 7 and self.white_pieces & (mask >> 7):
                 moves.append(self._index_to_square(index - 7))
-            if index % 8 > 0 and self.white_pieces & (mask >> 9):
+            if col > 0 and self.white_pieces & (mask >> 9):
                 moves.append(self._index_to_square(index - 9))
 
             # Check en passant capture
             if self.en_passant_board & mask:
-                if index % 8 < 7 and self.white_pieces & (mask << 1):
+                if col < 7 and self.white_pieces & (mask << 1):
                     moves.append(self._index_to_square(index - 7))
-                if index % 8 > 0 and self.white_pieces & (mask >> 1):
+                if col > 0 and self.white_pieces & (mask >> 1):
                     moves.append(self._index_to_square(index - 9))
 
         return moves
@@ -307,47 +306,46 @@ class Board:
     def get_knight_moves(self, index):
         moves = []
         mask = 1 << index
-
+        col, row = index % 8, index // 8
         piece_color = self._get_piece_color(self.get_piece(index))
 
         # right L shape moves
         # validate column moveable position
-        if index % 8 < 6:
+        if col < 6:
             # validate row moveable position 
-            if index // 8 > 0 and not mask >> 6 & piece_color:
+            if row > 0 and not mask >> 6 & piece_color:
                 # right down
                 moves.append(self._index_to_square(index - 6))
-            if index // 8 < 7 and not mask << 10 & piece_color:
+            if row < 7 and not mask << 10 & piece_color:
                 # right up
                 moves.append(self._index_to_square(index + 10))
 
         # left L shape moves
-        if index % 8 > 1:
-            if index // 8 > 0 and not mask >> 10 & piece_color:
+        if col > 1:
+            if row > 0 and not mask >> 10 & piece_color:
                 # left down
                 moves.append(self._index_to_square(index - 10))
-            if index // 8 < 7 and not mask << 6 & piece_color:
+            if row < 7 and not mask << 6 & piece_color:
                 # left up
                 moves.append(self._index_to_square(index + 6))
 
         # up L shape moves
-        if index // 8 > 1:
-            if index % 8 > 0 and not mask >> 17 & piece_color:
+        if row > 1:
+            if col > 0 and not mask >> 17 & piece_color:
                 # down left
                 moves.append(self._index_to_square(index - 17))
-            if index % 8 < 7 and not mask >> 15 & piece_color:
+            if col < 7 and not mask >> 15 & piece_color:
                 # down right
                 moves.append(self._index_to_square(index - 15))
 
         # down L shape moves
-        if index // 8 < 6:
-            if index % 8 > 0 and not mask << 15 & piece_color:
+        if row < 6:
+            if col > 0 and not mask << 15 & piece_color:
                 # up left
                 moves.append(self._index_to_square(index + 15))
-            if index % 8 < 7 and not mask << 17 & piece_color:
+            if col < 7 and not mask << 17 & piece_color:
                 # up right
                 moves.append(self._index_to_square(index + 17))
-
         return moves
 
     def _get_piece_color(self, piece):
@@ -414,7 +412,7 @@ if __name__ == "__main__":
 
     print(delta.total_seconds())
 
-    board.set_piece('n', 'h3')
+    board.set_piece('P', 'd6')
 
     print(board.get_board_string())
-    print(board.get_moves('h3'))
+    print(board.get_moves('d6'))
