@@ -214,7 +214,7 @@ class Board:
             return moves
 
         # Generate moves based on piece type
-        if piece == self.WHITE_PAWN_LABEL:
+        if piece == self.WHITE_PAWN_LABEL or piece == self.BLACK_PAWN_LABEL:
             moves.extend(map(lambda x: (square, x), self.get_pawn_moves(square)))
         # elif piece in ('N', 'n'):
         #     moves = self._get_knight_moves(index)
@@ -340,6 +340,7 @@ if __name__ == "__main__":
     delta = end - start
     
     print(delta.total_seconds())
-    board.set_piece('P','f4')
+
     
     print(board.get_board_string())
+    print(board.get_moves('a6'))
