@@ -98,30 +98,30 @@ class Board:
         # set piece location in temporary mask
         mask = 1 << index
 
+        self.board |= mask
         # check if piece location corresponds with any of the sub-boards
         if piece == self.EMPTY:
             # update main board
-            self.board &= ~mask
+            self.board ^= mask
             
             # update white pieces
-            self.white_pieces &= ~mask
-            self.white_pawns &= ~mask
-            self.white_rooks &= ~mask
-            self.white_knights &= ~mask
-            self.white_bishops &= ~mask
-            self.white_king &= ~mask
-            self.white_queens &= ~mask
+            self.white_pieces ^= mask
+            self.white_pawns ^= mask
+            self.white_rooks ^= mask
+            self.white_knights ^= mask
+            self.white_bishops ^= mask
+            self.white_king ^= mask
+            self.white_queens ^= mask
 
             # update black pieces
-            self.black_pieces &= ~mask
-            self.black_pawns &= ~mask
-            self.black_rooks &= ~mask
-            self.black_knights &= ~mask
-            self.black_bishops &= ~mask
-            self.black_king &= ~mask
-            self.black_queens &= ~mask
-
-        if piece.isupper():
+            self.black_pieces ^= mask
+            self.black_pawns ^= mask
+            self.black_rooks ^= mask
+            self.black_knights ^= mask
+            self.black_bishops ^= mask
+            self.black_king ^= mask
+            self.black_queens ^= mask
+        elif piece.isupper():
             self.white_pieces |= mask
             if piece == self.WHITE_KING_LABEL:
                 self.white_king |= mask
@@ -238,6 +238,7 @@ class Board:
         if mask & self.white_pieces:
             # Check one square forward
             if not self.board & (mask << 8):
+                print(square)
                 moves.append(self._index_to_square(index + 8))
 
                 # Check two squares forward on first move
@@ -251,10 +252,10 @@ class Board:
                 moves.append(self._index_to_square(index + 7))
 
             # Check en passant capture
-            if self.en_passant_board & index:
-                if index % 8 < 7 and self.black_pieces & (mask << 9):
+            if self.en_passant_board & mask:
+                if index % 8 < 7 and self.black_pieces & (mask << 1):
                     moves.append(self._index_to_square(index + 9))
-                if index % 8 > 0 and self.black_pieces & (mask << 7):
+                if index % 8 > 0 and self.black_pieces & (mask >> 1):
                     moves.append(self._index_to_square(index + 7))
 
         else:
@@ -273,7 +274,7 @@ class Board:
                 moves.append(self._index_to_square(index - 9))
 
             # Check en passant capture
-            if self.en_passant_board & index:
+            if self.en_passant_board & mask:
                 if index % 8 < 7 and self.white_pieces & (mask >> 7):
                     moves.append(self._index_to_square(index - 7))
                 if index % 8 > 0 and self.white_pieces & (mask >> 9):
@@ -341,6 +342,9 @@ if __name__ == "__main__":
     
     print(delta.total_seconds())
 
-    
+    board.set_piece('p','b5')
+    board.set_piece('p','a5')
+    board.set_piece('P','a4')
+    # board.en_passant_board |= 1 << board._square_to_index('f5')
     print(board.get_board_string())
-    print(board.get_moves('a6'))
+    print(board.get_moves('a4'))
