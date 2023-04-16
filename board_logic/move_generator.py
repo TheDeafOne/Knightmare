@@ -245,9 +245,9 @@ class MoveGenerator:
 
         return moves
     
-    def get_queen_moves(self, square):
-        return self.get_bishop_moves(square).extend(self.get_rook_moves(square))
-
+    def get_queen_moves(self, index):
+        return self.get_bishop_moves(index).extend(self.get_rook_moves(index))
+    
     def _is_empty(self, square):
         index = square
         if type(square) == str:
