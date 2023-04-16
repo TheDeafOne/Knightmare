@@ -41,7 +41,8 @@ class Board:
         # globals
         self.BOARD_LENGTH = 8
         self.ACROSS_BOARD = self.BOARD_LENGTH ** 2 - self.BOARD_LENGTH
-        self.EMPTY = '.'
+        self.EMPTY = '-'
+        self.HIGHLIGHT = '!'
 
         # total board
         self.black_pieces = 0xffff << self.BOARD_LENGTH * \
@@ -49,6 +50,7 @@ class Board:
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
         self.en_passant_board = 0
+        self.hilight_board = 0
 
         # sub-boards
         # white pieces
@@ -121,6 +123,8 @@ class Board:
             self.black_bishops ^= mask
             self.black_king ^= mask
             self.black_queens ^= mask
+        elif piece == self.HIGHLIGHT:
+            self.hilight_board |= mask
         elif piece.isupper():
             self.white_pieces |= mask
             if piece == self.WHITE_KING_LABEL:
@@ -166,7 +170,9 @@ class Board:
         else:
             index = square
         mask = 1 << index
-        if self.white_pieces & mask:
+        if self.hilight_board & mask:
+            return self.HIGHLIGHT
+        elif self.white_pieces & mask:
             if self.white_king & mask:
                 return self.WHITE_KING_LABEL
             elif self.white_queens & mask:
@@ -446,6 +452,10 @@ class Board:
         return chr(ord('a') + col) + str(row)
 
 
+    def hilight_moves(self, moves):
+        for move in moves:
+            move_to = move[1]
+            self.set_piece(self.HIGHLIGHT, move_to)
     '''
         returns the board as a string
         
@@ -483,5 +493,6 @@ if __name__ == "__main__":
     print(board.get_board_string())
     bishop_moves = board.get_moves('d4')
     print(bishop_moves)
-
+    board.hilight_moves(bishop_moves)
+    print(board.get_board_string())
     # print(board._is_opponent('e3',board.black_pieces))
