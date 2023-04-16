@@ -41,7 +41,7 @@ class Board:
         # globals
         self.BOARD_LENGTH = 8
         self.ACROSS_BOARD = self.BOARD_LENGTH ** 2 - self.BOARD_LENGTH
-        self.EMPTY = ' '
+        self.EMPTY = '.'
 
         # total board
         self.black_pieces = 0xffff << self.BOARD_LENGTH * \
@@ -220,8 +220,9 @@ class Board:
         elif piece == self.WHITE_KNIGHT_LABEL or piece == self.BLACK_KNIGHT_LABEL:
             moves.extend(map(lambda x: (square, x),
                          self.get_knight_moves(index)))
-        # elif piece in (self.WHITE_BISHOP_LABEL, 'b'):
-        #     moves = self._get_bishop_moves(index)
+        elif piece == self.WHITE_BISHOP_LABEL or piece == self.BLACK_BISHOP_LABEL:
+            moves.extend(map(lambda x: (square, x),
+                         self.get_bishop_moves(index)))
         # elif piece in (self.WHITE_ROOK_LABEL, 'r'):
         #     moves = self._get_rook_moves(index)
         # elif piece in (self.WHITE_QUEEN_LABEL, self.BLACK_QUEEN_LABEL):
@@ -312,7 +313,7 @@ class Board:
         # right L shape moves
         # validate column moveable position
         if col < 6:
-            # validate row moveable position 
+            # validate row moveable position
             if row > 0 and not mask >> 6 & piece_color:
                 # right down
                 moves.append(self._index_to_square(index - 6))
@@ -348,6 +349,69 @@ class Board:
                 moves.append(self._index_to_square(index + 17))
         return moves
 
+    def get_bishop_moves(self, index):
+        col, row = index % 8, index // 8
+        moves = []
+        opponent = self._get_other_piece_color(self.get_piece(index))
+
+        # Check northeast diagonal moves
+        for i in range(1, min(8 - row, 8 - col)):
+            new_index = index + i * 9
+            if self._is_empty(new_index):
+                moves.append(self._index_to_square(new_index))
+            elif self._is_opponent(new_index, opponent):
+                moves.append(self._index_to_square(new_index))
+                break
+            else:
+                break
+
+        # Check diagonal moves in direction of up and left
+        for i in range(1, min(8 - row, col + 1)):
+            new_index = index + i * 7
+            if self._is_empty(new_index):
+                moves.append(self._index_to_square(new_index))
+            elif self._is_opponent(new_index, opponent):
+                moves.append(self._index_to_square(new_index))
+                break
+            else:
+                break
+
+        # Check diagonal moves in direction of down and right
+        for i in range(1, min(row + 1, 8 - col)):
+            new_index = index - i * 7
+            if self._is_empty(new_index):
+                moves.append(self._index_to_square(new_index))
+            elif self._is_opponent(new_index, opponent):
+                moves.append(self._index_to_square(new_index))
+                break
+            else:
+                break
+
+        # Check diagonal moves in direction of down and left
+        for i in range(1, min(row + 1, col + 1)):
+            new_index = index - i * 9
+            if self._is_empty(new_index):
+                moves.append(self._index_to_square(new_index))
+            elif self._is_opponent(new_index, opponent):
+                moves.append(self._index_to_square(new_index))
+                break
+            else:
+                break
+
+        return moves
+
+    def _is_empty(self, square):
+        index = square
+        if type(square) == str:
+            index = self._square_to_index(square)
+        return not self.board & 1 << index
+
+    def _is_opponent(self, square, opponent):
+        index = square
+        if type(square) == str:
+            index = self._square_to_index(square)
+        return bool(opponent & 1 << index)
+
     def _get_piece_color(self, piece):
         return self.white_pieces if piece in ('KQRNBP') else self.black_pieces
 
@@ -381,6 +445,7 @@ class Board:
         col = index % self.BOARD_LENGTH
         return chr(ord('a') + col) + str(row)
 
+
     '''
         returns the board as a string
         
@@ -402,6 +467,7 @@ class Board:
         board_str.append('   ' + '\033[4m' + 'a b c d e f g h' + '\033[0m \n')
 
         return ''.join(board_str[::-1])
+    
 
 
 if __name__ == "__main__":
@@ -412,7 +478,10 @@ if __name__ == "__main__":
 
     print(delta.total_seconds())
 
-    board.set_piece('p', 'd3')
+    board.set_piece('B', 'd4')
 
     print(board.get_board_string())
-    print(board.get_moves('d3'))
+    bishop_moves = board.get_moves('d4')
+    print(bishop_moves)
+
+    # print(board._is_opponent('e3',board.black_pieces))
