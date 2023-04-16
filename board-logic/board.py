@@ -229,8 +229,8 @@ class Board:
         elif piece == self.WHITE_BISHOP_LABEL or piece == self.BLACK_BISHOP_LABEL:
             moves.extend(map(lambda x: (square, x),
                          self.get_bishop_moves(index)))
-        # elif piece in (self.WHITE_ROOK_LABEL, 'r'):
-        #     moves = self._get_rook_moves(index)
+        elif piece == self.WHITE_ROOK_LABEL or piece == self.BLACK_ROOK_LABEL:
+            moves.extend(map(lambda x: (square, x), self.get_rook_moves(index)))
         # elif piece in (self.WHITE_QUEEN_LABEL, self.BLACK_QUEEN_LABEL):
         #     moves = self._get_queen_moves(index)
         # elif piece in (self.WHITE_KING_LABEL, self.BLACK_KING_LABEL):
@@ -405,6 +405,53 @@ class Board:
                 break
 
         return moves
+    
+    def get_rook_moves(self, index):
+        moves = []
+        opponent = self._get_other_piece_color(self.get_piece(index))
+
+        # Get all possible moves to the right
+        for i in range(index + 1, index // 8 * 8 + 8):
+            if self._is_empty(i):
+                moves.append(self._index_to_square(i))
+            elif self._is_opponent(i, opponent):
+                moves.append(self._index_to_square(i))
+                break
+            else:
+                break
+
+        # Get all possible moves to the left
+        for i in range(index - 1, index // 8 * 8 - 1, -1):
+            if self._is_empty(i):
+                moves.append(self._index_to_square(i))
+            elif self._is_opponent(i, opponent):
+                moves.append(self._index_to_square(i))
+                break
+            else:
+                break
+            
+
+        # Get all possible moves going up
+        for i in range(index + 8, 64, 8):
+            if self._is_empty(i):
+                moves.append(self._index_to_square(i))
+            elif self._is_opponent(i, opponent):
+                moves.append(self._index_to_square(i))
+                break
+            else:
+                break
+
+        # Get all possible moves going down
+        for i in range(index - 8, -1, -8):
+            if self._is_empty(i):
+                moves.append(self._index_to_square(i))
+            elif self._is_opponent(i, opponent):
+                moves.append(self._index_to_square(i))
+                break
+            else:
+                break
+
+        return moves
 
     def _is_empty(self, square):
         index = square
@@ -488,10 +535,10 @@ if __name__ == "__main__":
 
     print(delta.total_seconds())
 
-    board.set_piece('B', 'd4')
+    board.set_piece('r', 'a6')
 
     print(board.get_board_string())
-    bishop_moves = board.get_moves('d4')
+    bishop_moves = board.get_moves('a6')
     print(bishop_moves)
     board.hilight_moves(bishop_moves)
     print(board.get_board_string())
