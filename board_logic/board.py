@@ -123,7 +123,7 @@ class Board:
             self.black_pieces |= mask
             if piece == constants.BLACK_KING:
                 self.black_king |= mask
-            elif piece == constants.WHITE_QUEEN:
+            elif piece == constants.BLACK_QUEEN:
                 self.black_queens |= mask
             elif piece == constants.BLACK_ROOK:
                 self.black_rooks |= mask
@@ -145,10 +145,10 @@ class Board:
     '''
 
     def get_piece(self, square):
+        index = square
         if type(square) == str:
             index = utils.square_to_index(square)
-        else:
-            index = square
+
         mask = 1 << index
         if self.hilight_board & mask:
             return constants.HIGHLIGHT
@@ -169,7 +169,7 @@ class Board:
             if self.black_king & mask:
                 return constants.BLACK_KING
             elif self.black_queens & mask:
-                return constants.WHITE_QUEEN
+                return constants.BLACK_QUEEN
             elif self.black_rooks & mask:
                 return constants.BLACK_ROOK
             elif self.black_bishops & mask:

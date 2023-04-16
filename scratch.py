@@ -9,7 +9,7 @@ delta = end - start
 print(delta.total_seconds())
 
 # set board values
-board.set_piece('r', 'a6')
+board.set_piece('q', 'a6')
 
 # print initial board
 print(board.get_board_string())
