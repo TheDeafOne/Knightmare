@@ -16,18 +16,16 @@ class MoveGenerator:
 
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
-            moves.extend(map(lambda x: (square, x),
-                         self.get_pawn_moves(index)))
+            moves.extend(self._get_move_paths(square, self.get_pawn_moves(index)))
         elif piece == constants.WHITE_KNIGHT or piece == constants.BLACK_KNIGHT:
-            moves.extend(map(lambda x: (square, x),
-                         self.get_knight_moves(index)))
+            moves.extend(self._get_move_paths(square, self.get_bishop_moves(index)))
         elif piece == constants.WHITE_BISHOP or piece == constants.BLACK_BISHOP:
-            moves.extend(map(lambda x: (square, x),
-                         self.get_bishop_moves(index)))
+            moves.extend(self._get_move_paths(square, self.get_bishop_moves(index)))
         elif piece == constants.WHITE_ROOK or piece == constants.BLACK_ROOK:
-            moves.extend(map(lambda x: (square, x), self.get_rook_moves(index)))
-        # elif piece in (self.WHITE_QUEEN, self.BLACK_QUEEN):
-        #     moves = self._get_queen_moves(index)
+            moves.extend(self._get_move_paths(square, self.get_rook_moves(index)))
+        elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
+            moves.extend(self._get_move_paths(square, self.get_queen_moves(index)))
+
         # elif piece in (self.WHITE_KING, self.BLACK_KING):
         #     moves = self._get_king_moves(index)
         return moves
@@ -246,6 +244,9 @@ class MoveGenerator:
                 break
 
         return moves
+    
+    def get_queen_moves(self, square):
+        return self.get_bishop_moves(square).extend(self.get_rook_moves(square))
 
     def _is_empty(self, square):
         index = square
@@ -264,3 +265,6 @@ class MoveGenerator:
 
     def _get_other_piece_color(self, piece):
         return self.board.black_pieces if piece in ('KQRNBP') else self.board.white_pieces
+    
+    def _get_move_paths(self, from_square, moves):
+        return [(from_square, to_square) for to_square in moves]
