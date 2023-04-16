@@ -42,7 +42,7 @@ class Board:
         self.BOARD_LENGTH = 8
         self.ACROSS_BOARD = self.BOARD_LENGTH ** 2 - self.BOARD_LENGTH
         self.EMPTY = '-'
-        self.HIGHLIGHT = '!'
+        self.HIGHLIGHT = '#'
 
         # total board
         self.black_pieces = 0xffff << self.BOARD_LENGTH * \
