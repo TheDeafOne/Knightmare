@@ -80,30 +80,29 @@ class Board:
         # set piece location in temporary mask
         mask = 1 << index
 
-       
         self.board |= mask
         # check if piece location corresponds with any of the sub-boards
         if piece == constants.EMPTY:
             # update main board
-            self.board ^= mask
+            self.board &= ~mask
 
             # update white pieces
-            self.white_pieces ^= mask
-            self.white_pawns ^= mask
-            self.white_rooks ^= mask
-            self.white_knights ^= mask
-            self.white_bishops ^= mask
-            self.white_king ^= mask
-            self.white_queens ^= mask
+            self.white_pieces &= ~mask
+            self.white_pawns &= ~mask
+            self.white_rooks &= ~mask
+            self.white_knights &= ~mask
+            self.white_bishops &= ~mask
+            self.white_king &= ~mask
+            self.white_queens &= ~mask
 
             # update black pieces
-            self.black_pieces ^= mask
-            self.black_pawns ^= mask
-            self.black_rooks ^= mask
-            self.black_knights ^= mask
-            self.black_bishops ^= mask
-            self.black_king ^= mask
-            self.black_queens ^= mask
+            self.black_pieces &= ~mask
+            self.black_pawns &= ~mask
+            self.black_rooks &= ~mask
+            self.black_knights &= ~mask
+            self.black_bishops &= ~mask
+            self.black_king &= ~mask
+            self.black_queens &= ~mask
         elif piece.isupper():
             self.white_pieces |= mask
             if piece == constants.WHITE_KING:
@@ -186,82 +185,9 @@ class Board:
     '''
 
     def move_piece(self, from_square, to_square):
-        # convert squares to indexes
-        from_index = utils.square_to_index(from_square)
-        to_index = utils.square_to_index(to_square)
-        # check to_square
-        to_mask = 1 << to_index
-        to_remove = self.get_piece(to_square)
-
-        if (self.white_pieces & to_mask):
-            self.white_pieces ^= to_mask
-            if (to_remove == constants.WHITE_KING):
-                self.white_king &= ~to_mask; 
-            elif (to_remove == constants.WHITE_QUEEN):
-                self.white_queens &= ~to_mask
-            elif (to_remove == constants.WHITE_ROOK):
-                self.white_rooks &= ~to_mask
-            elif (to_remove == constants.WHITE_BISHOP):
-                self.white_bishops &= ~to_mask
-            elif (to_remove == constants.WHITE_KNIGHT):
-                self.white_knights &= ~to_mask
-            elif (to_remove == constants.WHITE_PAWN):
-                self.white_pawns &= ~to_mask
-        elif (self.black_pieces & to_mask):
-            self.black_pieces &= ~to_mask
-            if (to_remove == constants.BLACK_KING):
-                self.black_king &= ~to_mask
-            elif (to_remove == constants.BLACK_QUEEN):
-                self.black_queens &= ~to_mask
-            elif (to_remove == constants.BLACK_ROOK):
-                self.black_rooks &= ~to_mask
-            elif (to_remove == constants.BLACK_BISHOP):
-                self.black_bishops &= ~to_mask
-            elif (to_remove == constants.BLACK_KNIGHT):
-                self.black_knights &= ~to_mask
-            elif (to_remove == constants.BLACK_PAWN):
-                self.black_pawns &= ~to_mask
-
-        # update boards
-        from_mask = 1 << from_index
-        self.board |= to_mask
-        self.board &= ~from_mask
-        if (self.white_pieces & from_index):
-            self.white_pieces |= to_mask
-            self.white_pieces &= ~from_mask
-            if (self.white_king & from_mask):
-                self.white_king |= to_mask
-                self.white_king &= ~from_mask
-            elif (self.white_queens & from_mask):
-                self.white_queens |= to_mask
-                self.white_queens &= ~from_mask
-            elif (self.white_rooks & from_mask):
-                self.white_rooks |= to_mask
-                self.white_rooks &= ~from_mask
-            elif (self.white_bishops & from_mask):
-                self.white_bishops |= to_mask
-                self.white_bishops &= ~from_mask
-            elif (self.white_pawns & from_mask):
-                self.white_pawns |= to_mask
-                self.white_pawns &= ~from_mask
-        else:
-            self.black_pieces |= to_mask
-            self.black_pieces &= ~ from_mask
-            if (self.black_king & ~from_mask):
-                self.black_king |= to_mask
-                self.black_king &= ~from_mask
-            elif (self.black_queens & from_mask):
-                self.black_queens |= to_mask
-                self.black_queens &= ~from_mask
-            elif (self.black_rooks & from_mask):
-                self.black_rooks |= to_mask
-                self.black_rooks &= ~from_mask
-            elif (self.black_bishops & from_mask):
-                self.black_bishops |= to_mask
-                self.black_bishops &= ~to_mask
-            elif (self.black_pawns & from_mask):
-                self.black_pawns |= to_mask
-                self.black_pawns &= ~from_mask
+        self.set_piece(constants.EMPTY, to_square)
+        self.set_piece(self.get_piece(from_square), to_square)
+        self.set_piece(constants.EMPTY, from_square)
 
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
