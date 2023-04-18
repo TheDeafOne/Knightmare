@@ -253,7 +253,7 @@ class Board:
             elif (self.black_queens & from_mask):
                 self.black_queens |= to_mask
                 self.black_queens &= ~from_mask
-            elif (self.black_rook & from_mask):
+            elif (self.black_rooks & from_mask):
                 self.black_rooks |= to_mask
                 self.black_rooks &= ~from_mask
             elif (self.black_bishops & from_mask):

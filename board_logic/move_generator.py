@@ -257,8 +257,8 @@ class MoveGenerator:
         return moves
     
     def _get_queen_moves(self, index):
-        moves = self.get_bishop_moves(index) 
-        moves |= self.get_rook_moves(index)
+        moves = self._get_bishop_moves(index) 
+        moves |= self._get_rook_moves(index)
         return moves
     
     def _is_empty(self, square):
