@@ -21,5 +21,10 @@ print(board.get_board_string())
 # bishop_moves = board.get_moves('a6')
 # board.hilight_moves(bishop_moves)
 
-# # print changed board
-# print(board.get_board_string())
+# print changed board
+print(board.get_board_string())
+
+# move pieces
+board.move_piece('a2','a3');
+board.move_piece('f2','d7');
+print(board.get_board_string())
