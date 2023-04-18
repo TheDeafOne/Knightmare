@@ -44,7 +44,7 @@ class Board:
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
         self.en_passant_board = 0
-        self.hilight_board = 0
+        self.highlight_board = 0
 
         # sub-boards
         self.white_pawns = 0xff << constants.BOARD_LENGTH
@@ -80,6 +80,7 @@ class Board:
         # set piece location in temporary mask
         mask = 1 << index
 
+       
         self.board |= mask
         # check if piece location corresponds with any of the sub-boards
         if piece == constants.EMPTY:
@@ -103,8 +104,6 @@ class Board:
             self.black_bishops ^= mask
             self.black_king ^= mask
             self.black_queens ^= mask
-        elif piece == constants.HIGHLIGHT:
-            self.hilight_board |= mask
         elif piece.isupper():
             self.white_pieces |= mask
             if piece == constants.WHITE_KING:
@@ -150,7 +149,8 @@ class Board:
             index = utils.square_to_index(square)
 
         mask = 1 << index
-        if self.hilight_board & mask:
+
+        if self.highlight_board & mask:
             return constants.HIGHLIGHT
         elif self.white_pieces & mask:
             if self.white_king & mask:
@@ -194,10 +194,10 @@ class Board:
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
 
-    def hilight_moves(self, moves):
-        for move in moves:
-            move_to = move[1]
-            self.set_piece(constants.HIGHLIGHT, move_to)
+    def highlight_moves(self, moves):
+        for i, cell in enumerate('{:64b}'.format(moves)[::-1]):
+            if cell == '1':
+                self.highlight_board |= 1 << i
 
     '''
         returns the board as a string
