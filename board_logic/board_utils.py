@@ -19,6 +19,14 @@ class BoardUtils:
         row = index // BoardConstants.BOARD_LENGTH + 1
         col = index % BoardConstants.BOARD_LENGTH
         return chr(ord('a') + col) + str(row)
+    
+    def bin_to_string(board):
+        ret = []
+        for i, cell in enumerate(format(board,'064b')):
+            if i % BoardConstants.BOARD_LENGTH == 0:
+                ret.append('\n')
+            ret.append(cell + ' ')
+        return ''.join(ret)
 
 class BoardConstants:
     # numeric constants
