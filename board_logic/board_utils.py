@@ -22,14 +22,13 @@ class BoardUtils:
     
     def bin_to_string(integer_board):
         board = []
-        row = []
-        for i, cell in enumerate(format(integer_board,'064b')):
-            if i % BoardConstants.BOARD_LENGTH == 0:
-                row.append('\n')
-                board.extend(row[::-1])
-                row = []
-            row.append(cell + ' ')
-        return ''.join(board)
+
+        board_string = format(integer_board,'064b')
+        for i in range(7,-1,-1):
+            for j in range(7,-1,-1):
+                board.append(board_string[(i*8)+(7-j)] + ' ')
+            board.append('\n')
+        return ''.join(board[::-1])
 
 class BoardConstants:
     # numeric constants
