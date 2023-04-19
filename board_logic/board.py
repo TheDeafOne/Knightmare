@@ -18,7 +18,9 @@ class Board:
         1 1 1 1 1 1 1 1
         0 0 0 0 0 0 0 0
 
+        
         ATTRIBUTES
+
         BOARD_LENGTH: an integer indicating the length of a standard chess board
         ACROSS_BOARD: an integer representing the number of cells from one side of the board to other
         board: a 64 bit integer whose bits represent the location of pieces (1 if a piece is on that cell, 0 otherwise)
@@ -35,6 +37,31 @@ class Board:
         black_bishops: a 64 bit integer whose bits represent the location of the black bishops
         black_queens: a 64 bit integer whose bits represent the location of the black queens
         black_king: a 64 bit integer whose bits represent the location of the black king
+
+
+        METHODS
+
+        set_pieces(piece, square)
+            sets the given square to the given piece
+            returns None
+        
+        get_piece(square)
+            returns the character value of the piece in the given square (e.g. K if the piece in the givne square is the white king)
+        
+        move_piece(from_square, to_square)
+            moves the piece in the cell identified by 'from_square' to the cell identified by 'to_square'
+            returns None
+
+        get_moves(square)
+            returns an integer mask representing the moves that the piece in the given square can take
+
+        highlight_moves(moves)
+            clears the highlighted board and sets it to whatever the given integer mask of moves is
+            note that to clear highlighted moves, a 0 must be passed to this function
+            returns None
+
+        get_board_string()
+            returns the current state of the board as a string. Any highlighted moves on the highlighted moves board will be represented
     '''
 
     def __init__(self):
@@ -43,10 +70,23 @@ class Board:
             (constants.BOARD_LENGTH - 2)
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
+
+        # track en_passant for pawns
         self.en_passant_board = 0
+
+        # track move highlights for the board string
         self.highlight_board = 0
 
         # sub-boards
+        # note the sub-boards have the following bit patterns for each piece:
+        # pawn: 0b1111111100000000
+        # rook: 0b10000001
+        # knight: 0b01000010
+        # bishop: 0b00100100
+        # king: 0b00010000
+        # queen: 0b00001000
+
+        # set the initial white pieces
         self.white_pawns = 0xff << constants.BOARD_LENGTH
         self.white_rooks = 0x81
         self.white_knights = 0x42
@@ -54,6 +94,7 @@ class Board:
         self.white_king = 0x10
         self.white_queens = 0x8
 
+        # set the initial black pieces and move them accross the board
         self.black_pawns = 0xff << constants.ACROSS_BOARD >> constants.BOARD_LENGTH
         self.black_rooks = 0x81 << constants.ACROSS_BOARD
         self.black_knights = 0x42 << constants.ACROSS_BOARD
@@ -72,16 +113,17 @@ class Board:
     '''
 
     def set_piece(self, piece, square):
+        # conver given square to index
+        index = square
         if type(square) == str:
             index = utils.square_to_index(square)
-        else:
-            index = square
 
         # set piece location in temporary mask
         mask = 1 << index
 
         self.board |= mask
         # check if piece location corresponds with any of the sub-boards
+        # set the cell to be empty
         if piece == constants.EMPTY:
             # update main board
             self.board &= ~mask
@@ -103,6 +145,7 @@ class Board:
             self.black_bishops &= ~mask
             self.black_king &= ~mask
             self.black_queens &= ~mask
+        # set the cell to be a white piece
         elif piece.isupper():
             self.white_pieces |= mask
             if piece == constants.WHITE_KING:
@@ -117,6 +160,7 @@ class Board:
                 self.white_knights |= mask
             elif piece == constants.WHITE_PAWN:
                 self.white_pawns |= mask
+        # set the cell to be a black piece
         else:
             self.black_pieces |= mask
             if piece == constants.BLACK_KING:
@@ -136,21 +180,25 @@ class Board:
         gets the piece in the given square or index
 
         PARAMS
-        square: string or integer index identifying the cell on the board to return
+        square: an alphanumeric index or integer index identifying the cell on the board to return
 
         RETURNS
         a character in the set of pieces if that piece is in the cell, the empty character otherwise
     '''
 
     def get_piece(self, square):
+        # convert given square to index
         index = square
         if type(square) == str:
             index = utils.square_to_index(square)
 
+        # make mask representation of index
         mask = 1 << index
 
+        # prioritize highlights for board string
         if self.highlight_board & mask:
             return constants.HIGHLIGHT
+        # manage white pieces
         elif self.white_pieces & mask:
             if self.white_king & mask:
                 return constants.WHITE_KING
@@ -164,6 +212,7 @@ class Board:
                 return constants.WHITE_KNIGHT
             elif self.white_pawns & mask:
                 return constants.WHITE_PAWN
+        # manage black pieces
         else:
             if self.black_king & mask:
                 return constants.BLACK_KING
@@ -182,26 +231,49 @@ class Board:
     '''
         moves the piece from cell 'from_square' to the cell 'to_square'
 
+        PARAMS
+        from_square: an alphnumeric square index (e.g. a1, h4, etc.) identifying the square from which the moving piece originated
+        to_square: an alphanumeric square index indentifying the square to which the moving piece will land
     '''
 
     def move_piece(self, from_square, to_square):
+        # clear to cell
         self.set_piece(constants.EMPTY, to_square)
+
+        # set to cell to piece in from cell
         self.set_piece(self.get_piece(from_square), to_square)
+
+        # clear from cell
         self.set_piece(constants.EMPTY, from_square)
 
+    '''
+        gets the moves the piece in the given square can take
+
+        RETURNS
+        an integer mask representing the moves the piece in the given square can take
+    '''
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
-
-    def highlight_moves(self, moves):
-        for i, cell in enumerate('{:64b}'.format(moves)[::-1]):
-            if cell == '1':
-                self.highlight_board |= 1 << i
+    
 
     '''
-        returns the board as a string
+        sets the highlight board
+
+        PARAMS
+        moves: an integer mask representing the moves a piece can take
+    '''
+    def highlight_moves(self, moves):
+        # clear any previously highlighted moves
+        self.highlight_board = 0
+
+        # set highlight_board to the given moves
+        self.highlight_board |= moves
+
+    '''
+        returns the current board as a string
         
         RETURNS
-        string representing the board
+        string representing the board with an origin of a1 on the lower left corner
     '''
 
     def get_board_string(self):
@@ -209,12 +281,15 @@ class Board:
 
         # cycle through board cells and append what the cell
         for row in range(constants.BOARD_LENGTH):
+            # reflect board so origin is in lower left corner
             for col in range(constants.BOARD_LENGTH-1, -1, -1):
                 board_str.append(self.get_piece(
                     row * constants.BOARD_LENGTH + col) + ' ')
-            board_str.append(str(row+1) + '| ')
+            board_str.append(str(row+1) + '| ') # left board index and border
             board_str.append('\n')
         board_str = board_str[:-1]  # remove trailing new line
+        # top index and border
         board_str.append('   ' + '\033[4m' + 'a b c d e f g h' + '\033[0m \n')
-
+        
+        # reverse board to have origin on lower left corner
         return ''.join(board_str[::-1])
