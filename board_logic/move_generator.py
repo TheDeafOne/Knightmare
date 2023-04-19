@@ -7,13 +7,12 @@ class MoveGenerator:
         self.board = board
 
     def generate_moves(self, square):
-        print('generating moves')
         index = utils.square_to_index(square)
         piece = self.board.get_piece(index)
 
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
-            return self._get_pawn_moves(index)
+            return self._get_pawn_moves(index, self._get_opponent_piece_color(piece))
         elif piece == constants.WHITE_KNIGHT or piece == constants.BLACK_KNIGHT:
             return self._get_knight_moves(index)
         elif piece == constants.WHITE_BISHOP or piece == constants.BLACK_BISHOP:
@@ -27,14 +26,16 @@ class MoveGenerator:
 
         return 0  # square given was empty
 
-    def _get_pawn_moves(self, index):
+    def _get_pawn_moves(self, index, opponent):
         # moves = []
         moves = 0
         mask = 1 << index
         col = index % 8
-
+        print('opponent')
+        print(utils.bin_to_string(opponent))
+        print()
         # check if piece is white
-        if mask & self.board.white_pieces:
+        if opponent == self.board.black_pieces:
             # Check one square forward
             if not self.board.board & (mask << 8):
                 # moves.append(utils.index_to_square(index + 8))
@@ -262,30 +263,37 @@ class MoveGenerator:
         for i in [1, 7, 8, 9]:
             top_index = index + i
             bottom_index = index - i
-            if not self._in_check(top_index):
+            if top_index >= 0 and not self._in_check(top_index, index):
                 moves |= 1 << top_index
-            if not self._in_check(bottom_index):
+            if bottom_index >= 0 and not self._in_check(bottom_index, index):
                 moves |= 1 << bottom_index
 
         return moves
 
-    def _in_check(self, index):
+    def _in_check(self, index, relative_to):
+        if not self._is_next_to(index, relative_to):
+            return True
+        
         pawns = self.board.white_pawns
         bishops = self.board.white_bishops
         knights = self.board.white_knights
         rooks = self.board.white_rooks
         queens = self.board.white_queens
         king = self.board.white_king
+        pieces = self.board.white_pieces
 
-        if self._get_opponent_piece_color(self.board.get_piece(index)) == self.board.black_pieces:
+        if self._get_opponent_piece_color(self.board.get_piece(index)) == self.board.white_pieces:
             pawns = self.board.black_pawns
             bishops = self.board.black_bishops
             knights = self.board.black_knights
             rooks = self.board.black_rooks
             queens = self.board.black_queens
-            queen = self.board.black_king
-
-        if pawns & self._get_pawn_moves(index):
+            king = self.board.black_king
+            pieces = self.board.black_pieces
+        print(self.board.get_board_string())
+        print(utils.index_to_square(index))
+        print(utils.bin_to_string(self._get_pawn_moves(index, self.board.black_pieces)))
+        if pawns & self._get_pawn_moves(index, pieces):
             return True
         if bishops & self._get_bishop_moves(index):
             return True
@@ -296,17 +304,28 @@ class MoveGenerator:
         if queens & self._get_queen_moves(index):
             return True
 
-
         tentative_king_positions = 0
         for i in [1, 7, 8, 9]:
-            tentative_king_positions |= 1 << index + i
-            tentative_king_positions |= 1 << index - i
-            
+            top_index = index + i
+            bottom_index = index - i
+            if self._is_next_to(index, top_index):
+                tentative_king_positions |= 1 << top_index
+                
+            if bottom_index >= 0 and self._is_next_to(index, bottom_index):
+                tentative_king_positions |= 1 << bottom_index
+                
         if tentative_king_positions & king:
             return True
         # check for other king moves
         return False
-
+    
+    def _is_next_to(self, from_index, to_index):
+        from_col, from_row = from_index % 8, from_index // 8
+        to_col, to_row = to_index % 8, to_index // 8
+        if abs(from_col - to_col) > 1 or abs(from_row - to_row) > 1:
+            return False
+        return True
+        
     def _is_empty(self, square):
         index = square
         if type(square) == str:
