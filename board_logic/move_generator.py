@@ -5,14 +5,18 @@ from .board_utils import BoardUtils as utils, BoardConstants as constants
 class MoveGenerator:
     def __init__(self, board):
         self.board = board
+        self.opponent = 0
+        self.player = 0
 
     def generate_moves(self, square):
         index = utils.square_to_index(square)
         piece = self.board.get_piece(index)
+        self.opponent = self._get_opponent_piece_color(piece)
+        self.player = self._get_piece_color(piece)
 
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
-            return self._get_pawn_moves(index, self._get_opponent_piece_color(piece))
+            return self._get_pawn_moves(index)
         elif piece == constants.WHITE_KNIGHT or piece == constants.BLACK_KNIGHT:
             return self._get_knight_moves(index)
         elif piece == constants.WHITE_BISHOP or piece == constants.BLACK_BISHOP:
@@ -26,16 +30,13 @@ class MoveGenerator:
 
         return 0  # square given was empty
 
-    def _get_pawn_moves(self, index, opponent):
+    def _get_pawn_moves(self, index):
         # moves = []
         moves = 0
         mask = 1 << index
         col = index % 8
-        print('opponent')
-        print(utils.bin_to_string(opponent))
-        print()
         # check if piece is white
-        if opponent == self.board.black_pieces:
+        if self.opponent == self.board.black_pieces:
             # Check one square forward
             if not self.board.board & (mask << 8):
                 # moves.append(utils.index_to_square(index + 8))
@@ -116,43 +117,42 @@ class MoveGenerator:
         moves = 0
         mask = 1 << index
         col, row = index % 8, index // 8
-        piece_color = self._get_piece_color(self.board.get_piece(index))
 
         # right L shape moves
         # validate column moveable position
         if col < 6:
             # validate row moveable position
-            if row > 0 and not mask >> 6 & piece_color:
+            if row > 0 and not mask >> 6 & self.player:
                 # right down
                 moves |= mask >> 6
-            if row < 7 and not mask << 10 & piece_color:
+            if row < 7 and not mask << 10 & self.player:
                 # right up
                 moves |= mask << 10
 
         # left L shape moves
         if col > 1:
-            if row > 0 and not mask >> 10 & piece_color:
+            if row > 0 and not mask >> 10 & self.player:
                 # left down
                 moves |= mask >> 10
-            if row < 7 and not mask << 6 & piece_color:
+            if row < 7 and not mask << 6 & self.player:
                 # left up
                 moves |= mask << 6
 
         # up L shape moves
         if row > 1:
-            if col > 0 and not mask >> 17 & piece_color:
+            if col > 0 and not mask >> 17 & self.player:
                 # down left
                 moves |= mask >> 17
-            if col < 7 and not mask >> 15 & piece_color:
+            if col < 7 and not mask >> 15 & self.player:
                 # down right
                 moves |= mask >> 15
 
         # down L shape moves
         if row < 6:
-            if col > 0 and not mask << 15 & piece_color:
+            if col > 0 and not mask << 15 & self.player:
                 # up left
                 moves |= mask << 15
-            if col < 7 and not mask << 17 & piece_color:
+            if col < 7 and not mask << 17 & self.player:
                 # up right
                 moves |= mask << 17
 
@@ -161,13 +161,13 @@ class MoveGenerator:
     def _get_bishop_moves(self, index):
         col, row = index % 8, index // 8
         moves = 0
-        opponent = self._get_opponent_piece_color(self.board.get_piece(index))
+        
         # Check northeast moves
         for i in range(1, min(8 - row, 8 - col)):
             new_index = index + i * 9
             if self._is_empty(new_index):
                 moves |= 1 << new_index
-            elif self._is_opponent(new_index, opponent):
+            elif self._is_opponent(new_index):
                 moves |= 1 << new_index
                 break
             else:
@@ -178,7 +178,7 @@ class MoveGenerator:
             new_index = index + i * 7
             if self._is_empty(new_index):
                 moves |= 1 << new_index
-            elif self._is_opponent(new_index, opponent):
+            elif self._is_opponent(new_index):
                 moves |= 1 << new_index
                 break
             else:
@@ -189,7 +189,7 @@ class MoveGenerator:
             new_index = index - i * 7
             if self._is_empty(new_index):
                 moves |= 1 << new_index
-            elif self._is_opponent(new_index, opponent):
+            elif self._is_opponent(new_index):
                 moves |= 1 << new_index
                 break
             else:
@@ -200,7 +200,7 @@ class MoveGenerator:
             new_index = index - i * 9
             if self._is_empty(new_index):
                 moves |= 1 << new_index
-            elif self._is_opponent(new_index, opponent):
+            elif self._is_opponent(new_index):
                 moves |= 1 << new_index
                 break
             else:
@@ -209,13 +209,12 @@ class MoveGenerator:
 
     def _get_rook_moves(self, index):
         moves = 0
-        opponent = self._get_opponent_piece_color(self.board.get_piece(index))
 
         # Get all possible moves to the right
         for i in range(index + 1, index // 8 * 8 + 8):
             if self._is_empty(i):
                 moves |= 1 << i
-            elif self._is_opponent(i, opponent):
+            elif self._is_opponent(i):
                 moves |= 1 << i
                 break
             else:
@@ -225,7 +224,7 @@ class MoveGenerator:
         for i in range(index - 1, index // 8 * 8 - 1, -1):
             if self._is_empty(i):
                 moves |= 1 << i
-            elif self._is_opponent(i, opponent):
+            elif self._is_opponent(i):
                 moves |= 1 << i
                 break
             else:
@@ -235,7 +234,7 @@ class MoveGenerator:
         for i in range(index + 8, 64, 8):
             if self._is_empty(i):
                 moves |= 1 << i
-            elif self._is_opponent(i, opponent):
+            elif self._is_opponent(i):
                 moves |= 1 << i
                 break
             else:
@@ -245,7 +244,7 @@ class MoveGenerator:
         for i in range(index - 8, -1, -8):
             if self._is_empty(i):
                 moves |= 1 << i
-            elif self._is_opponent(i, opponent):
+            elif self._is_opponent(i):
                 moves |= 1 << i
                 break
             else:
@@ -263,9 +262,11 @@ class MoveGenerator:
         for i in [1, 7, 8, 9]:
             top_index = index + i
             bottom_index = index - i
-            if top_index >= 0 and not self._in_check(top_index, index):
+            top_mask = 1 << top_index
+            bottom_mask = 1 << bottom_index
+            if top_index >= 0 and not top_mask & self.player and not self._in_check(top_index, index):
                 moves |= 1 << top_index
-            if bottom_index >= 0 and not self._in_check(bottom_index, index):
+            if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index):
                 moves |= 1 << bottom_index
 
         return moves
@@ -274,26 +275,28 @@ class MoveGenerator:
         if not self._is_next_to(index, relative_to):
             return True
         
-        pawns = self.board.white_pawns
-        bishops = self.board.white_bishops
-        knights = self.board.white_knights
-        rooks = self.board.white_rooks
-        queens = self.board.white_queens
-        king = self.board.white_king
-        pieces = self.board.white_pieces
-
-        if self._get_opponent_piece_color(self.board.get_piece(index)) == self.board.white_pieces:
+        if self.opponent == self.board.black_pieces:
             pawns = self.board.black_pawns
             bishops = self.board.black_bishops
             knights = self.board.black_knights
             rooks = self.board.black_rooks
             queens = self.board.black_queens
             king = self.board.black_king
-            pieces = self.board.black_pieces
-        print(self.board.get_board_string())
-        print(utils.index_to_square(index))
-        print(utils.bin_to_string(self._get_pawn_moves(index, self.board.black_pieces)))
-        if pawns & self._get_pawn_moves(index, pieces):
+            self.opponent = self.board.black_pieces
+            self.player = self.board.white_pieces
+        else:
+            pawns = self.board.white_pawns
+            bishops = self.board.white_bishops
+            knights = self.board.white_knights
+            rooks = self.board.white_rooks
+            queens = self.board.white_queens
+            king = self.board.white_king
+            self.opponent = self.board.white_pieces
+            self.player = self.board.black_pieces
+       
+        
+        if pawns & self._get_pawn_moves(index):
+            print('in check from pawns')
             return True
         if bishops & self._get_bishop_moves(index):
             return True
@@ -332,11 +335,11 @@ class MoveGenerator:
             index = utils.square_to_index(square)
         return not self.board.board & 1 << index
 
-    def _is_opponent(self, square, opponent):
+    def _is_opponent(self, square):
         index = square
         if type(square) == str:
             index = utils.square_to_index(square)
-        return bool(opponent & 1 << index)
+        return bool(self.opponent & 1 << index)
 
     def _get_piece_color(self, piece):
         return self.board.white_pieces if piece in ('KQRNBP') else self.board.black_pieces
