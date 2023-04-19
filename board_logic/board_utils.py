@@ -28,7 +28,7 @@ class BoardUtils:
             for j in range(7,-1,-1):
                 board.append(board_string[(i*8)+(7-j)] + ' ')
             board.append('\n')
-        return ''.join(board[::-1])
+        return ''.join(board[::-1][1:])
 
 class BoardConstants:
     # numeric constants
