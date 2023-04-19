@@ -20,13 +20,17 @@ class BoardUtils:
         col = index % BoardConstants.BOARD_LENGTH
         return chr(ord('a') + col) + str(row)
     
-    def bin_to_string(board):
-        ret = []
-        for i, cell in enumerate(format(board,'064b')):
+    def bin_to_string(integer_board):
+        board = []
+        row = []
+        for i, cell in enumerate(format(integer_board,'064b')):
+            print(i)
             if i % BoardConstants.BOARD_LENGTH == 0:
-                ret.append('\n')
-            ret.append(cell + ' ')
-        return ''.join(ret)
+                row.append('\n')
+                board.extend(row[::-1])
+                row = []
+            row.append(cell + ' ')
+        return ''.join(board)
 
 class BoardConstants:
     # numeric constants
