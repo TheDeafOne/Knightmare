@@ -1,18 +1,15 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
 # from .board import Board
 
+
 class MoveGenerator:
     def __init__(self, board):
         self.board = board
 
     def generate_moves(self, square):
         print('generating moves')
-        moves = 0
         index = utils.square_to_index(square)
         piece = self.board.get_piece(index)
-
-        if piece == constants.EMPTY:
-            return moves
 
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
@@ -25,10 +22,10 @@ class MoveGenerator:
             return self._get_rook_moves(index)
         elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
             return self._get_queen_moves(index)
-        elif piece == constants.WHITE_KING or piece == constants.BLACK_QUEEN:
-            pass
-            # moves = self._get_king_moves(index)
-        return moves
+        elif piece == constants.WHITE_KING or piece == constants.BLACK_KING:
+            return self._get_king_moves(index)
+
+        return 0  # square given was empty
 
     def _get_pawn_moves(self, index):
         # moves = []
@@ -163,7 +160,7 @@ class MoveGenerator:
     def _get_bishop_moves(self, index):
         col, row = index % 8, index // 8
         moves = 0
-        opponent = self._get_other_piece_color(self.board.get_piece(index))
+        opponent = self._get_opponent_piece_color(self.board.get_piece(index))
         # Check northeast moves
         for i in range(1, min(8 - row, 8 - col)):
             new_index = index + i * 9
@@ -174,7 +171,7 @@ class MoveGenerator:
                 break
             else:
                 break
-        
+
         # Check northwest moves
         for i in range(1, min(8 - row, col + 1)):
             new_index = index + i * 7
@@ -208,10 +205,10 @@ class MoveGenerator:
             else:
                 break
         return moves
-    
+
     def _get_rook_moves(self, index):
         moves = 0
-        opponent = self._get_other_piece_color(self.board.get_piece(index))
+        opponent = self._get_opponent_piece_color(self.board.get_piece(index))
 
         # Get all possible moves to the right
         for i in range(index + 1, index // 8 * 8 + 8):
@@ -232,7 +229,6 @@ class MoveGenerator:
                 break
             else:
                 break
-            
 
         # Get all possible moves going up
         for i in range(index + 8, 64, 8):
@@ -255,12 +251,52 @@ class MoveGenerator:
                 break
 
         return moves
-    
+
     def _get_queen_moves(self, index):
-        moves = self._get_bishop_moves(index) 
+        moves = self._get_bishop_moves(index)
         moves |= self._get_rook_moves(index)
         return moves
-    
+
+    def _get_king_moves(self, index):
+        moves = 0
+        for i in [1, 7, 8, 9]:
+            top_index = index + i
+            bottom_index = index - i
+            if not self._in_check(top_index):
+                moves |= 1 << top_index
+            if not self._in_check(bottom_index):
+                moves |= 1 << bottom_index
+
+        return moves
+
+    def _in_check(self, index):
+        pawns = self.board.white_pawns
+        bishops = self.board.white_bishops
+        knights = self.board.white_knights
+        rooks = self.board.white_rooks
+        queens = self.board.white_queens
+
+        if self._get_opponent_piece_color(self.board.get_piece(index)) == self.board.black_pieces:
+            pawns = self.board.black_pawns
+            bishops = self.board.black_bishops
+            knights = self.board.black_knights
+            rooks = self.board.black_rooks
+            queens = self.board.black_queens
+
+        if pawns & self._get_pawn_moves(index):
+            return True
+        if bishops & self._get_bishop_moves(index):
+            return True
+        if knights & self._get_knight_moves(index):
+            return True
+        if rooks & self._get_rook_moves(index):
+            return True
+        if queens & self._get_queen_moves(index):
+            return True
+        
+        # check for other king moves
+        return False
+
     def _is_empty(self, square):
         index = square
         if type(square) == str:
@@ -276,9 +312,8 @@ class MoveGenerator:
     def _get_piece_color(self, piece):
         return self.board.white_pieces if piece in ('KQRNBP') else self.board.black_pieces
 
-    def _get_other_piece_color(self, piece):
+    def _get_opponent_piece_color(self, piece):
         return self.board.black_pieces if piece in ('KQRNBP') else self.board.white_pieces
-    
+
     def _get_move_paths(self, from_square, moves):
         return [(from_square, to_square) for to_square in moves]
-

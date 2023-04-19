@@ -24,7 +24,6 @@ class BoardUtils:
         board = []
         row = []
         for i, cell in enumerate(format(integer_board,'064b')):
-            print(i)
             if i % BoardConstants.BOARD_LENGTH == 0:
                 row.append('\n')
                 board.extend(row[::-1])
