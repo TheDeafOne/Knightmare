@@ -275,6 +275,7 @@ class MoveGenerator:
         knights = self.board.white_knights
         rooks = self.board.white_rooks
         queens = self.board.white_queens
+        king = self.board.white_king
 
         if self._get_opponent_piece_color(self.board.get_piece(index)) == self.board.black_pieces:
             pawns = self.board.black_pawns
@@ -282,6 +283,7 @@ class MoveGenerator:
             knights = self.board.black_knights
             rooks = self.board.black_rooks
             queens = self.board.black_queens
+            queen = self.board.black_king
 
         if pawns & self._get_pawn_moves(index):
             return True
@@ -293,7 +295,15 @@ class MoveGenerator:
             return True
         if queens & self._get_queen_moves(index):
             return True
-        
+
+
+        tentative_king_positions = 0
+        for i in [1, 7, 8, 9]:
+            tentative_king_positions |= 1 << index + i
+            tentative_king_positions |= 1 << index - i
+            
+        if tentative_king_positions & king:
+            return True
         # check for other king moves
         return False
 
