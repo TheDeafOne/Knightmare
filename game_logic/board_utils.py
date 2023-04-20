@@ -29,11 +29,6 @@ class BoardUtils:
             board.append('\n')
         return ''.join(board[::-1][1:])
 
-    def board_to_squares(integer_board, index=False):
-        return [BoardUtils.index_to_square(i) if index else i
-                for i, cell in enumerate(format(integer_board, '064b')) if cell == '1']
-
-
 class BoardConstants:
     # numeric constants
     BOARD_LENGTH = 8

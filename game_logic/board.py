@@ -258,6 +258,10 @@ class Board:
 
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
+    
+    def board_to_piece_list(self, integer_board, index):
+        return [(self.get_piece(i), utils.index_to_square(i)) if index else i
+                for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
 
     '''
         sets the highlight board
