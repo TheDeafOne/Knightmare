@@ -49,7 +49,7 @@ class Board:
             returns None
 
         get_piece(square)
-            returns the character value of the piece in the given square (e.g. K if the piece in the givne square is the white king)
+            returns the character value of the piece in the given square (e.g. K if the piece in the given square is the white king)
 
         move_piece(from_square, to_square)
             moves the piece in the cell identified by 'from_square' to the cell identified by 'to_square'

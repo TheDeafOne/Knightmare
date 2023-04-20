@@ -1,5 +1,5 @@
-from board_logic.board import Board
-from board_logic.board_utils import BoardUtils as utils, BoardConstants as constants
+from game_logic.board import Board
+from game_logic.board_utils import BoardUtils as utils, BoardConstants as constants
 import datetime
 
 # time initialize board
