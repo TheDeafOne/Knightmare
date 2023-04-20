@@ -1,6 +1,7 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
 from .move_generator import MoveGenerator
 
+
 class Board:
     '''
         A class used to manage a chess board using the piece-centric bitboard representation
@@ -17,6 +18,7 @@ class Board:
         0 0 0 0 0 0 0 0
         1 1 1 1 1 1 1 1
         0 0 0 0 0 0 0 0
+
 
         
         ATTRIBUTES
@@ -39,15 +41,16 @@ class Board:
         black_king: a 64 bit integer whose bits represent the location of the black king
 
 
+        
         METHODS
 
         set_pieces(piece, square)
             sets the given square to the given piece
             returns None
-        
+
         get_piece(square)
             returns the character value of the piece in the given square (e.g. K if the piece in the givne square is the white king)
-        
+
         move_piece(from_square, to_square)
             moves the piece in the cell identified by 'from_square' to the cell identified by 'to_square'
             returns None
@@ -252,9 +255,9 @@ class Board:
         RETURNS
         an integer mask representing the moves the piece in the given square can take
     '''
+
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
-    
 
     '''
         sets the highlight board
@@ -262,6 +265,7 @@ class Board:
         PARAMS
         moves: an integer mask representing the moves a piece can take
     '''
+
     def highlight_moves(self, moves):
         # clear any previously highlighted moves
         self.highlight_board = 0
@@ -285,11 +289,11 @@ class Board:
             for col in range(constants.BOARD_LENGTH-1, -1, -1):
                 board_str.append(self.get_piece(
                     row * constants.BOARD_LENGTH + col) + ' ')
-            board_str.append(str(row+1) + '| ') # left board index and border
+            board_str.append(str(row+1) + '| ')  # left board index and border
             board_str.append('\n')
         board_str = board_str[:-1]  # remove trailing new line
         # top index and border
         board_str.append('   ' + '\033[4m' + 'a b c d e f g h' + '\033[0m \n')
-        
+
         # reverse board to have origin on lower left corner
         return ''.join(board_str[::-1])
