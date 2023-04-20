@@ -10,12 +10,13 @@ board = Board()
 board.set_piece('k','d5')
 board.set_piece(constants.EMPTY, 'e2')
 board.set_piece(constants.EMPTY, 'c2')
-board.move_piece('d5','b5')
+board.move_piece('d5','e5')
+index = utils.square_to_index('e5')
+print(board.move_generator._in_check(index,index))
 
-moves = board.get_moves('b5')
-
+# moves = board.get_moves('b5')
 # print(utils.bin_to_string(moves))
-board.highlight_moves(moves)
+# board.highlight_moves(moves)
 end = datetime.datetime.now()
 delta = end - start
 print(delta.total_seconds())
