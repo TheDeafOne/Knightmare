@@ -156,7 +156,7 @@ class MoveGenerator:
 
                 # Check two squares forward on first move
                 if index > 47 and not self.board.board & (mask >> 16):
-                    moves |= mask >> 8
+                    moves |= mask >> 16
 
             # Check diagonal captures
             if col < 7 and self.board.white_pieces & (mask >> 7):
