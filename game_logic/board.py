@@ -20,7 +20,7 @@ class Board:
         0 0 0 0 0 0 0 0
 
 
-        
+
         ATTRIBUTES
 
         BOARD_LENGTH: an integer indicating the length of a standard chess board
@@ -41,7 +41,7 @@ class Board:
         black_king: a 64 bit integer whose bits represent the location of the black king
 
 
-        
+
         METHODS
 
         set_pieces(piece, square)
@@ -259,8 +259,34 @@ class Board:
     def get_moves(self, square):
         return self.move_generator.generate_moves(square)
     
-    def board_to_piece_list(self, integer_board, index):
-        return [(self.get_piece(i), utils.index_to_square(i)) if index else i
+    '''
+        determines the given piece's color
+
+        PARAMS
+        piece: a character representing the piece in an arbitrary cell
+
+        RETURNS
+        the given piece's color
+    '''
+
+    def get_piece_color(self, piece):
+        return self.white_pieces if piece in ('KQRNBP') else self.black_pieces
+
+    '''
+        determines the opponent piece color based on the given piece
+
+        PARAMS
+        piece: a character representing the piece in an arbitrary cell
+
+        RETURNS
+        the opposing color of the the given piece's color (e.g. black if the piece is white)
+    '''
+
+    def get_opponent_piece_color(self, piece):
+        return self.black_pieces if piece in ('KQRNBP') else self.white_pieces
+
+    def board_to_piece_list(self, integer_board, index=False):
+        return [utils.index_to_square(i) if not index else i
                 for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
 
     '''

@@ -93,8 +93,8 @@ class MoveGenerator:
         piece = self.board.get_piece(index)
 
         # initialize player and opponent piece sets
-        self.opponent = self._get_opponent_piece_color(piece)
-        self.player = self._get_piece_color(piece)
+        self.opponent = self.board.get_opponent_piece_color(piece)
+        self.player = self.board.get_piece_color(piece)
 
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
@@ -525,31 +525,6 @@ class MoveGenerator:
             index = utils.square_to_index(square)
         return bool(self.opponent & 1 << index)
 
-    '''
-        determines the given piece's color
-
-        PARAMS
-        piece: a character representing the piece in an arbitrary cell
-
-        RETURNS
-        the given piece's color
-    '''
-
-    def _get_piece_color(self, piece):
-        return self.board.white_pieces if piece in ('KQRNBP') else self.board.black_pieces
-
-    '''
-        determines the opponent piece color based on the given piece
-
-        PARAMS
-        piece: a character representing the piece in an arbitrary cell
-
-        RETURNS
-        the opposing color of the the given piece's color (e.g. black if the piece is white)
-    '''
-
-    def _get_opponent_piece_color(self, piece):
-        return self.board.black_pieces if piece in ('KQRNBP') else self.board.white_pieces
 
     '''
         parses the moves of a given square into a list of tuples
