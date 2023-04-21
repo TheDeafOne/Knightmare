@@ -1,5 +1,6 @@
 import pygame
 from .board import Board
+from .board_utils import BoardConstants as constants
 
 class Chess:
     def __init__(self):
@@ -7,27 +8,64 @@ class Chess:
         self.board = Board()
         self.player = self.board.white_pieces
         self.opponent = self.board.black_pieces
-
+        
+        # column letters
+        self.letters = "abcdefgh"
+        
+        
         # initialize visualization variables
         # start menu
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
         self.GRAY = (128, 128, 128)
 
-        pygame.init()
         self.WINDOW_SIZE = (400, 400)
+        self.PIECE_IMAGE_SIZE = (45,45)
 
         # game
         self.BOARD_SIZE = 8
         self.SQUARE_SIZE = 50
         self.BORDER_SIZE = 25
 
+        self.pieces = [
+            pygame.image.load("./game_logic/assets/black_knight.bmp"),
+            pygame.image.load("./game_logic/assets/black_pawn.bmp"),
+            pygame.image.load("./game_logic/assets/black_bishop.bmp"),
+            pygame.image.load("./game_logic/assets/black_rook.bmp"),
+            pygame.image.load("./game_logic/assets/black_queen.bmp"),
+            pygame.image.load("./game_logic/assets/black_king.bmp"),
+            pygame.image.load("./game_logic/assets/white_pawn.bmp"),
+            pygame.image.load("./game_logic/assets/white_knight.bmp"),
+            pygame.image.load("./game_logic/assets/white_bishop.bmp"),
+            pygame.image.load("./game_logic/assets/white_rook.bmp"),
+            pygame.image.load("./game_logic/assets/white_queen.bmp"),
+            pygame.image.load("./game_logic/assets/white_king.bmp")
+        ]
+        self.pieces = [pygame.transform.scale(piece_image, self.PIECE_IMAGE_SIZE) for piece_image in self.pieces]
+        self.piece_map = dict(zip(["n","p","b","r","q","k","P","N","B","R","Q","K"],self.pieces))
         
+
+        # Create the chess board
+        self.draw_board = [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p", "p", "p", "p", "p", "p", "p", "p"],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["P", "P", "P", "P", "P", "P", "P", "P"],
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ]
+
+        # game states
+        self.game_state = "start_menu"
+        self.player_state = "selection"
+
         # Create the window
+        pygame.init()
         self.window = pygame.display.set_mode(self.WINDOW_SIZE)
         pygame.display.set_caption("Knightmare")
 
-        self.game_state = "start_menu"
 
 
     def play(self):
@@ -39,18 +77,32 @@ class Chess:
                     pygame.quit()
                     quit()
 
-            if self.game_state == "start_menu":
-                start_button, options_button, quit_button = self.draw_start_menu()
-                if pygame.mouse.get_pressed()[0]:
-                    mouse_pos = pygame.mouse.get_pos()
-                    if start_button.collidepoint(mouse_pos):
-                        self.game_state = "game"
-                
+                elif self.game_state == "start_menu":
+                    start_button, options_button, quit_button = self.draw_start_menu()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_position = pygame.mouse.get_pos()
+                        if start_button.collidepoint(mouse_position):
+                            self.game_state = "game"
+                            self.window.fill(0) # clear window
+                        if quit_button.collidepoint(mouse_position):
+                            pygame.quit()
+                            quit()
+                elif self.game_state == "options_menu":
+                    self.draw_options_menu()
+                elif self.game_state == "game":
+                    self.draw_game()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_position = pygame.mouse.get_pos()
+                        if self.player_state == "selection":
+                            position = self.get_square_clicked(mouse_position)
+                            print(position)
 
-            elif self.game_state == "options_menu":
-                self.draw_options_menu()
-            elif self.game_state == "game":
-                self.draw_game()
+                            if position != None and self.board.get_piece(position) != constants.EMPTY:
+                                self.game_state = "move"
+                                moves = self.board.get_moves(position)
+
+                                print(moves)
+                        
 
             # Update the display
             pygame.display.update()
@@ -103,3 +155,26 @@ class Chess:
                     color = self.GRAY
                 pygame.draw.rect(self.window, color, [x, y, self.SQUARE_SIZE, self.SQUARE_SIZE])
 
+                # draw pieces
+                piece = self.draw_board[row][col]
+                if piece != "":
+                    image = self.piece_map[piece]
+                    self.window.blit(image, (x,y))
+
+    
+    def get_square_clicked(self, position):
+        x, y = position
+        x += self.SQUARE_SIZE//2
+        y += self.SQUARE_SIZE//2
+
+        
+        # if the click was outside the board, ignore it
+        if x < self.BORDER_SIZE or x > self.BORDER_SIZE + (self.SQUARE_SIZE * self.BOARD_SIZE) or \
+        y < self.BORDER_SIZE or y > self.BORDER_SIZE + (self.SQUARE_SIZE * self.BOARD_SIZE):
+            return None
+        
+        row = (y - self.BORDER_SIZE) // self.SQUARE_SIZE
+        col = (x - self.BORDER_SIZE) // self.SQUARE_SIZE
+
+        return self.letters[col] + str(self.BOARD_SIZE - row)
+        
