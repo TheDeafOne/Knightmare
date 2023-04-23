@@ -387,7 +387,8 @@ class MoveGenerator:
             top_index = index + i
             bottom_index = index - i
             top_mask = 1 << top_index
-            bottom_mask = 1 << bottom_index
+            if bottom_index >= 0:
+                bottom_mask = 1 << bottom_index
             if top_index >= 0 and not top_mask & self.player and not self._in_check(top_index, index):
                 moves |= 1 << top_index
             if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index):
