@@ -89,21 +89,25 @@ class Chess:
                     self.draw_options_menu()
                 elif self.game_state == "game":
                     self.draw_game()
+                    
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
-                        if self.player_state == "selection":
-                            position = self.get_square_clicked(mouse_position)
+                        tentative_moves = []
+                        position = self.get_square_clicked(mouse_position)
+                        print(position)
+                        if position != None:
                             piece = self.board.get_piece(position)
-                            print(position)
-
+                        if self.player_state == "selection":
                             if position != None and self.board.get_piece_color(piece) == self.player:
                                 self.game_state = "move"
                                 moves = self.board.board_to_piece_list(
                                     self.board.get_moves(position))
-                                print(moves)
+                                tentative_moves = moves
                                 for move in moves:
                                     row, col = utils.square_to_row_col(move)
                                     self.highlight_square(row, col)
+                        # if self.player_state == "move"
+                                
 
             # Update the display
             pygame.display.update()
@@ -189,18 +193,14 @@ class Chess:
         self.window.blit(player_label, player_indication_position)
 
 
-        
-
 
 
     def get_square_clicked(self, position):
         x, y = position
-        x += self.SQUARE_SIZE//2
-        y += self.SQUARE_SIZE//2
-
+        x -= self.SQUARE_SIZE//2
         # if the click was outside the board, ignore it
-        if x < 0 or x > (self.SQUARE_SIZE * self.BOARD_SIZE) or \
-                y < 0 or y > (self.SQUARE_SIZE * self.BOARD_SIZE):
+        if x < 0 or x > self.WINDOW_SIZE[0] or \
+                y < 0 or y > (self.WINDOW_SIZE[0] - self.SQUARE_SIZE/2):
             return None
 
         row = y // self.SQUARE_SIZE
