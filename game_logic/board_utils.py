@@ -10,10 +10,14 @@ class BoardUtils:
     '''
     def square_to_index(square):
         # get index equivalent of characters
-        file = ord(square[0]) - ord('a')
-        rank = int(square[1]) - 1
+        row, col = BoardUtils.square_to_row_col(square)
         # return bitwise index of given square
-        return rank * BoardConstants.BOARD_LENGTH + file
+        return row * BoardConstants.BOARD_LENGTH + col
+    
+    def square_to_row_col(square):
+        row = int(square[1]) - 1
+        col = ord(square[0]) - ord('a')
+        return row, col
 
     def index_to_square(index):
         row = index // BoardConstants.BOARD_LENGTH + 1
@@ -28,6 +32,7 @@ class BoardUtils:
                 board.append(board_string[(i*8)+(7-j)] + ' ')
             board.append('\n')
         return ''.join(board[::-1][1:])
+    
 
 class BoardConstants:
     # numeric constants
