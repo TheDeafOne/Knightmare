@@ -1,6 +1,7 @@
 import pygame
 from .board import Board
-from .board_utils import BoardConstants as constants
+from .board_utils import BoardUtils as utils, BoardConstants as constants
+
 
 class Chess:
     def __init__(self):
@@ -8,24 +9,22 @@ class Chess:
         self.board = Board()
         self.player = self.board.white_pieces
         self.opponent = self.board.black_pieces
-        
+
         # column letters
         self.letters = "abcdefgh"
-        
-        
+
         # initialize visualization variables
         # start menu
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
         self.GRAY = (128, 128, 128)
 
-        self.WINDOW_SIZE = (400, 400)
-        self.PIECE_IMAGE_SIZE = (45,45)
+        self.WINDOW_SIZE = (425, 425)
+        self.PIECE_IMAGE_SIZE = (45, 45)
 
         # game
         self.BOARD_SIZE = 8
         self.SQUARE_SIZE = 50
-        self.BORDER_SIZE = 25
 
         self.pieces = [
             pygame.image.load("./game_logic/assets/black_knight.bmp"),
@@ -41,9 +40,10 @@ class Chess:
             pygame.image.load("./game_logic/assets/white_queen.bmp"),
             pygame.image.load("./game_logic/assets/white_king.bmp")
         ]
-        self.pieces = [pygame.transform.scale(piece_image, self.PIECE_IMAGE_SIZE) for piece_image in self.pieces]
-        self.piece_map = dict(zip(["n","p","b","r","q","k","P","N","B","R","Q","K"],self.pieces))
-        
+        self.pieces = [pygame.transform.scale(
+            piece_image, self.PIECE_IMAGE_SIZE) for piece_image in self.pieces]
+        self.piece_map = dict(
+            zip(["n", "p", "b", "r", "q", "k", "P", "N", "B", "R", "Q", "K"], self.pieces))
 
         # Create the chess board
         self.draw_board = [
@@ -66,8 +66,6 @@ class Chess:
         self.window = pygame.display.set_mode(self.WINDOW_SIZE)
         pygame.display.set_caption("Knightmare")
 
-
-
     def play(self):
         # Start the game loop
         while True:
@@ -83,7 +81,7 @@ class Chess:
                         mouse_position = pygame.mouse.get_pos()
                         if start_button.collidepoint(mouse_position):
                             self.game_state = "game"
-                            self.window.fill(0) # clear window
+                            self.window.fill(self.WHITE)  # clear window
                         if quit_button.collidepoint(mouse_position):
                             pygame.quit()
                             quit()
@@ -95,14 +93,17 @@ class Chess:
                         mouse_position = pygame.mouse.get_pos()
                         if self.player_state == "selection":
                             position = self.get_square_clicked(mouse_position)
+                            piece = self.board.get_piece(position)
                             print(position)
 
-                            if position != None and self.board.get_piece(position) != constants.EMPTY:
+                            if position != None and self.board.get_piece_color(piece) == self.player:
                                 self.game_state = "move"
-                                moves = self.board.get_moves(position)
-
+                                moves = self.board.board_to_piece_list(
+                                    self.board.get_moves(position))
                                 print(moves)
-                        
+                                for move in moves:
+                                    row, col = utils.square_to_row_col(move)
+                                    self.highlight_square(row, col)
 
             # Update the display
             pygame.display.update()
@@ -147,34 +148,76 @@ class Chess:
         # Draw the chess board
         for row in range(8):
             for col in range(8):
-                x = col * self.SQUARE_SIZE
+                x = col * self.SQUARE_SIZE + self.SQUARE_SIZE//2
                 y = row * self.SQUARE_SIZE
                 if (row + col) % 2 == 0:
                     color = self.WHITE
                 else:
                     color = self.GRAY
-                pygame.draw.rect(self.window, color, [x, y, self.SQUARE_SIZE, self.SQUARE_SIZE])
+                pygame.draw.rect(self.window, color, [
+                                 x, y, self.SQUARE_SIZE, self.SQUARE_SIZE])
 
                 # draw pieces
                 piece = self.draw_board[row][col]
                 if piece != "":
                     image = self.piece_map[piece]
-                    self.window.blit(image, (x,y))
+                    self.window.blit(image, (x, y))
 
-    
+        index_font = pygame.font.SysFont("Arial", int(self.SQUARE_SIZE/2.5))
+        for i in range(8):
+            row_label = index_font.render(str(8-i), True, self.BLACK)
+            self.window.blit(row_label, (
+                self.SQUARE_SIZE/8,
+                i*self.SQUARE_SIZE+self.SQUARE_SIZE/4
+            ))
+
+            col_label = index_font.render(self.letters[i], True, self.BLACK)
+            self.window.blit(col_label, (
+                (i + 1) * self.SQUARE_SIZE - self.SQUARE_SIZE/8,
+                self.SQUARE_SIZE*8))
+        
+        current_player = 'W'
+        current_color = self.WHITE
+        contrast_color = self.BLACK
+        if self.player == self.board.black_pieces:
+            current_player = 'B'
+            current_color = self.BLACK
+            contrast_color = self.WHITE
+        player_indication_position = (self.SQUARE_SIZE/8,self.WINDOW_SIZE[0]-self.SQUARE_SIZE/2)
+        pygame.draw.circle(self.window, contrast_color, (self.SQUARE_SIZE/3.5,self.WINDOW_SIZE[0]-self.SQUARE_SIZE/4), self.SQUARE_SIZE/4)
+        player_label = index_font.render(current_player, True, current_color)
+        self.window.blit(player_label, player_indication_position)
+
+
+        
+
+
+
     def get_square_clicked(self, position):
         x, y = position
         x += self.SQUARE_SIZE//2
         y += self.SQUARE_SIZE//2
 
-        
         # if the click was outside the board, ignore it
-        if x < self.BORDER_SIZE or x > self.BORDER_SIZE + (self.SQUARE_SIZE * self.BOARD_SIZE) or \
-        y < self.BORDER_SIZE or y > self.BORDER_SIZE + (self.SQUARE_SIZE * self.BOARD_SIZE):
+        if x < 0 or x > (self.SQUARE_SIZE * self.BOARD_SIZE) or \
+                y < 0 or y > (self.SQUARE_SIZE * self.BOARD_SIZE):
             return None
-        
-        row = (y - self.BORDER_SIZE) // self.SQUARE_SIZE
-        col = (x - self.BORDER_SIZE) // self.SQUARE_SIZE
+
+        row = y // self.SQUARE_SIZE
+        col = x // self.SQUARE_SIZE
 
         return self.letters[col] + str(self.BOARD_SIZE - row)
-        
+
+    # https://stackoverflow.com/questions/6339057/draw-a-transparent-rectangles-and-polygons-in-pygame
+    def highlight_square(self, x, y):
+        left = (x * self.SQUARE_SIZE) + (self.SQUARE_SIZE // 2 + self.SQUARE_SIZE)
+        top = (y * self.SQUARE_SIZE) - self.SQUARE_SIZE // 2
+
+        # square_surface = pygame.Surface((top, left), pygame.SRCALPHA)
+        # pygame.draw.rect(self.window, (0, 0, 255, 125), rect)
+
+        highlight_surface = pygame.Surface(
+            (self.SQUARE_SIZE, self.SQUARE_SIZE), pygame.SRCALPHA)  # the size of your rect
+        # this fills the entire surface
+        highlight_surface.fill((173, 216, 230, 150))
+        self.window.blit(highlight_surface, (top, left))
