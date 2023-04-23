@@ -61,6 +61,7 @@ class Chess:
         # game states
         self.game_state = "start_menu"
         self.player_state = "selection"
+        self.current_player_color = "W"
         self.player_moves = []
         self.player_focus = None
 
@@ -96,7 +97,7 @@ class Chess:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
                         position = self.get_square_clicked(mouse_position)
-                        print(position)
+      
                         if position != None:
                             piece = self.board.get_piece(position)
                             if self.player_state == "selection":
@@ -114,11 +115,19 @@ class Chess:
                                 else:
                                     # move piece
                                     self.board.move_piece(self.player_focus, position)
-
+                                    print('move: ', (self.current_player_color, self.player_focus, position))
                                     # switch players
-                                    tmp_p = self.player
-                                    self.player = self.opponent
-                                    self.opponent = tmp_p
+                                    if self.current_player_color == "W":
+                                        self.current_player_color = "B"
+                                        updated_player = self.board.black_pieces
+                                        updated_opponent = self.board.white_pieces
+                                    else:
+                                        self.current_player_color = "W"
+                                        updated_player = self.board.white_pieces
+                                        updated_opponent = self.board.black_pieces
+
+                                    self.player = updated_player
+                                    self.opponent = updated_opponent
 
                                     # switch player state
                                     self.player_moves = []
