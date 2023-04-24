@@ -105,8 +105,23 @@ class Board:
         self.black_king = 0x10 << constants.ACROSS_BOARD
         self.black_queens = 0x8 << constants.ACROSS_BOARD
 
+        self.last_move = tuple()
         self.move_generator = MoveGenerator(self)
 
+    '''
+        checks whether there is a piece in the given square with the given color
+
+        PARAMS
+        index: index of the square to check
+        color: color to check for
+
+    '''
+    def check_piece(self, index, color):
+        if (color == constants.WHITE):
+            return self.white_pieces & (1 << index)
+        else:
+            return self.black_pieces & (1 << index)
+        
     '''
         sets a given piece to a given square
 
@@ -240,14 +255,32 @@ class Board:
     '''
 
     def move_piece(self, from_square, to_square):
+        # get pieces
+        to_piece = self.get_piece(to_square)
+        from_piece = self.get_piece(from_square)
+
         # clear to cell
         self.set_piece(constants.EMPTY, to_square)
 
         # set to cell to piece in from cell
-        self.set_piece(self.get_piece(from_square), to_square)
+        self.set_piece(from_piece, to_square)
 
         # clear from cell
         self.set_piece(constants.EMPTY, from_square)
+        
+        # save latest move
+        self.last_move = (from_piece,from_square,to_piece,to_square)
+
+    '''
+        undo the last move made
+
+    '''
+    def undo_last(self):
+        if len(self.last_move) != 0:
+            self.set_piece(self.last_move[0],self.last_move[1])
+            self.set_piece(self.last_move[2],self.last_move[3])
+            self.last_move = tuple()
+
 
     '''
         gets the moves the piece in the given square can take

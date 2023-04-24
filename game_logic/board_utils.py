@@ -59,3 +59,7 @@ class BoardConstants:
     BLACK_BISHOP = 'b'
     BLACK_QUEEN = 'q'
     BLACK_KING = 'k'
+
+    # players
+    WHITE = 0
+    BLACK = 1
