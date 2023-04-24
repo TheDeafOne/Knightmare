@@ -5,7 +5,7 @@ import copy
 
 class MiniMax():
     def __init__(self):
-        self.MAX_DEPTH = 3
+        self.MAX_DEPTH = 4
         self.next_move = tuple()
 
     '''
@@ -46,12 +46,6 @@ class MiniMax():
                         if (depth == 0):
                             self.next_move = move # track next move
                         best_val = score
-                    # best_val = max(score, best_val)
-
-                    # for testing, print score values
-                    # for j in range(depth):
-                    #     print('\t',end='')
-                    # print(str(score))
 
                     alpha = max(alpha,best_val)
                     if (beta <= alpha):
@@ -60,11 +54,6 @@ class MiniMax():
                 for move in possible_moves:
                     score = self.get_max(board,move)
                     best_val = max(score,best_val)
-
-                    # for testing, print score values
-                    # for j in range(depth):
-                    #     print('\t',end='')
-                    # print(str(score))
 
                     alpha = max(alpha,best_val)
                     if (beta <= alpha):
@@ -81,11 +70,6 @@ class MiniMax():
                         score = (self.minimax(not maximizing, board_cpy, constants.WHITE, depth+1, alpha, beta))
                     board_cpy.undo_last()
 
-                    # for testing, print score values
-                    # for j in range(depth):
-                    #     print('\t',end='')
-                    # print(str(score))
-
                     best_val = min(score, best_val)
                     beta = min(best_val, beta)
                     if (beta <= alpha):
@@ -94,11 +78,6 @@ class MiniMax():
                 for move in possible_moves:
                     score = self.get_min(board,move)  
                     best_val = min(score, best_val)
-
-                    # for testing, print score values
-                    # for j in range(depth):
-                    #     print('\t',end='')
-                    # print(str(score))
 
                     beta = min(best_val, beta)
                     if (beta <= alpha):
