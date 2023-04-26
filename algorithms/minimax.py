@@ -5,7 +5,7 @@ import copy
 
 class MiniMax():
     def __init__(self):
-        self.MAX_DEPTH = 4
+        self.MAX_DEPTH = 3
         self.next_move = tuple()
 
     '''
@@ -52,7 +52,7 @@ class MiniMax():
                         break
             else:
                 for move in possible_moves:
-                    score = self.get_max(board,move)
+                    score = self.get_max(board,move,player)
                     best_val = max(score,best_val)
 
                     alpha = max(alpha,best_val)
@@ -76,16 +76,19 @@ class MiniMax():
                         break
             else:
                 for move in possible_moves:
-                    score = self.get_min(board,move)  
-                    best_val = min(score, best_val)
+                    score = self.get_min(board,move,player)  
+                    best_val = min(score,best_val,player)
 
                     beta = min(best_val, beta)
                     if (beta <= alpha):
                         break
             return best_val
 
-    def get_max(self,board,move):
-        return 0
+    def get_max(self,board,move,color):
+        board.move_piece(move[0],move[1])
+        score = board.get_score(color)
+        board.undo_last()
+        return score
 
-    def get_min(self,board,move):
-        return -self.get_max(move,board)
+    def get_min(self,board,move,color):
+        return -self.get_max(board,move,color)

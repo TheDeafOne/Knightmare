@@ -8,27 +8,33 @@ start = datetime.datetime.now()
 board = Board()
 
 
-board.set_piece('k','d5')
-board.set_piece(constants.EMPTY, 'e2')
-board.set_piece(constants.EMPTY, 'c2')
-board.move_piece('d5','e5')
-index = utils.square_to_index('e5')
+# board.set_piece('k','d5')
+# board.set_piece(constants.EMPTY, 'e2')
+# board.set_piece(constants.EMPTY, 'c2')
+# board.move_piece('d5','e5')
+# index = utils.square_to_index('e5')
 
-print(board.get_board_string())
-board.move_piece('g2','g4')
-print(board.get_board_string())
-board.undo_last()
-print(board.get_board_string())
+# print(board.get_board_string())
+# board.move_piece('g2','g4')
+# print(board.get_board_string())
+# board.undo_last()
+# print(board.get_board_string())
 
-if board.check_piece(utils.square_to_index('a2'),constants.WHITE):
-    print('success')
-if board.check_piece(utils.square_to_index('d8'),constants.BLACK):
-    print('success')
+# if board.check_piece(utils.square_to_index('a2'),constants.WHITE):
+#     print('success')
+# if board.check_piece(utils.square_to_index('d8'),constants.BLACK):
+#     print('success')
 
 minimax = MiniMax()
-next_move = minimax.get_next_move(board,constants.WHITE)
-print(next_move[0] + " to " + next_move[1] + '\n')
-print(board.get_board_string())
+
+for i in range(40):
+    if (i % 2 == 0): 
+        next_move = minimax.get_next_move(board,constants.WHITE)
+    else:
+        next_move = minimax.get_next_move(board,constants.BLACK)
+    print(next_move[0] + " to " + next_move[1] + '\n')
+    board.move_piece(next_move[0],next_move[1])
+    print(board.get_board_string())
 
 # moves = board.get_moves('b5')
 # print(utils.bin_to_string(moves))

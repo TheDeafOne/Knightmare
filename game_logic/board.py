@@ -109,6 +109,31 @@ class Board:
         self.move_generator = MoveGenerator(self)
 
     '''
+        gets the board's evaluation score
+    '''
+    def get_score(self, color):
+        white_count = 30*self.white_bishops.bit_count() +  \
+            10*self.white_pawns.bit_count() + \
+            50*self.white_rooks.bit_count() + \
+            30*self.white_knights.bit_count() + \
+            90*self.white_queens.bit_count() + \
+            900*self.white_king.bit_count()
+            
+        black_count = 30*self.black_bishops.bit_count() +  \
+            10*self.black_pawns.bit_count() + \
+            50*self.black_rooks.bit_count() + \
+            30*self.black_knights.bit_count() + \
+            90*self.black_queens.bit_count() + \
+            900*self.black_king.bit_count()
+        
+        if (color == constants.WHITE):
+            return white_count - black_count
+        else:
+            return black_count - white_count
+        
+         
+    
+    '''
         checks whether there is a piece in the given square with the given color
 
         PARAMS
