@@ -109,9 +109,10 @@ class Chess:
                                     
                             if self.player_state == "move":
                                 if position not in self.player_moves:
-                                    self.player_focus = position
-                                    self.player_moves = self.board.board_to_piece_list(
-                                        self.board.get_moves(position))
+                                    if self.board.get_piece_color(piece) == self.player:
+                                        self.player_focus = position
+                                        self.player_moves = self.board.board_to_piece_list(
+                                            self.board.get_moves(position))
                                 else:
                                     # move piece
                                     self.board.move_piece(self.player_focus, position)
