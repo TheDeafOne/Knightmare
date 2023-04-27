@@ -514,15 +514,15 @@ class MoveGenerator:
     '''
         this function assumes no moves are available to the given king
     '''
-    def _in_mate(self, piece):
-        self.player = self.board.get_piece_color(piece)
-        self.opponent = self.board.get_opponent_piece_color(piece)
+    def _in_mate(self, king_board):
+        self.player = self.board.white_pieces
+        self.opponent = self.board.black_pieces
         
-        king = self.board.white_king
-        if self.player == self.board.black_pieces:
-            king = self.board.black_king
+        if king_board == self.board.black_king:
+            self.player = self.board.black_pieces
+            self.opponent = self.board.white_pieces
         
-        king_index = utils.singleton_board_to_index(king)
+        king_index = utils.singleton_board_to_index(king_board)
         king_check = self._in_check(king_index, king_index)
         attacking = king_check[0]
 
@@ -554,7 +554,18 @@ class MoveGenerator:
         
         # check if the checking piece cant be captured
         # check if the line of attack can't be blocked
+    
+    def _is_pinned(self, square):
+        index = square
+        if type(square) == str:
+            index = utils.square_to_index(square)
+        piece = self.board.get_piece(index)
+        king = constants.WHITE_KING
+        if self.board.get_piece_color(piece) == self.board.black_pieces:
+            king = constants.BLACK_KING
         
+        
+        pass
 
     '''
         determines whether a given cell a is next to a given cell b. This is to manage out of board errors when doing bitshifts
