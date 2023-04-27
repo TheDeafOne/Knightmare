@@ -74,8 +74,8 @@ class MoveGenerator:
 
     def __init__(self, board):
         self.board = board
-        self.opponent = 0
-        self.player = 0
+        self.opponent = board.black_pieces
+        self.player = board.white_pieces
 
     '''
         gets all the possible moves the piece in the given square could possibly make, if any
@@ -461,9 +461,6 @@ class MoveGenerator:
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
-        print(utils.bin_to_string(self._get_rook_moves(index)))
-        print()
-        print(utils.bin_to_string(rooks))
         test_checked_piece = rooks & self._get_rook_moves(index)
         if test_checked_piece:
             checking_pieces |= test_checked_piece
@@ -502,17 +499,16 @@ class MoveGenerator:
         this function assumes no moves are available to the given king
     '''
     def _in_mate(self, piece):
-        player = self.board.get_piece_color(piece)
-        opponent = self.board.get_opponent_piece_color(piece)
+        self.player = self.board.get_piece_color(piece)
+        self.opponent = self.board.get_opponent_piece_color(piece)
 
         king = 0
         king = self.board.white_king
-        if player == self.board.black_king:
+        if self.player == self.board.black_king:
             king = self.board.black_king
         
         king_index = int(round(math.log(king, 2)))
         attacked = self._in_check(king_index, king_index)
-        print()
         return attacked
 
         
