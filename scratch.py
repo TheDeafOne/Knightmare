@@ -4,7 +4,6 @@ import datetime
 from algorithms.minimax import MiniMax
 
 # time initialize board
-start = datetime.datetime.now()
 board = Board()
 
 
@@ -28,6 +27,7 @@ board = Board()
 minimax = MiniMax()
 
 for i in range(40):
+    start = datetime.datetime.now()
     if (i % 2 == 0): 
         next_move = minimax.get_next_move(board,constants.WHITE)
     else:
@@ -35,14 +35,15 @@ for i in range(40):
     print(next_move[0] + " to " + next_move[1] + '\n')
     board.move_piece(next_move[0],next_move[1])
     print(board.get_board_string())
+    end = datetime.datetime.now()
+    delta = end - start
+    print(delta.total_seconds())
 
 # moves = board.get_moves('b5')
 # print(utils.bin_to_string(moves))
 # board.highlight_moves(moves)
 
-# end = datetime.datetime.now()
-# delta = end - start
-# print(delta.total_seconds())
+
 # print(board.get_board_string())
 # possible_moves = []
 # moves = board.get_moves('a2')
