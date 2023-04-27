@@ -76,7 +76,15 @@ class MoveGenerator:
         self.board = board
         self.opponent = board.black_pieces
         self.player = board.white_pieces
-
+        self.piece_move_map = {
+            constants.WHITE_BISHOP: self._get_bishop_moves,
+            constants.WHITE_PAWN: self._get_pawn_moves,
+            constants.WHITE_KNIGHT: self._get_knight_moves,
+            constants.WHITE_ROOK: self._get_rook_moves,
+            constants.WHITE_QUEEN: self._get_queen_moves,
+            constants.WHITE_KING: self._get_king_moves
+        }
+        
     '''
         gets all the possible moves the piece in the given square could possibly make, if any
         
@@ -414,7 +422,7 @@ class MoveGenerator:
     def _in_check(self, index, relative_to):
         # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
         if not self._is_next_to(index, relative_to) or index < 0:
-            return -1 # i.e. True
+            return (-1, -1) # i.e. True
         
         # determine which piece color to compare to when sensing
         if self.opponent == self.board.black_pieces:
@@ -442,33 +450,38 @@ class MoveGenerator:
         
         # determine what moves would cause a check, if any
         pawn_moves = self._get_pawn_moves(index)
-        search_field |= pawn_moves
         test_checked_piece = pawns & pawn_moves
         if test_checked_piece:
+            search_field |= pawn_moves
             checking_pieces |= test_checked_piece
 
         knight_moves = self._get_knight_moves(index)
-        search_field |= knight_moves
         test_checked_piece = knights & knight_moves
         if test_checked_piece:
+            search_field |= knight_moves
             checking_pieces |= test_checked_piece
 
         bishop_moves = self._get_bishop_moves(index)
-        search_field |= bishop_moves
         test_checked_piece = bishops & bishop_moves
         if test_checked_piece:
+            search_field |= bishop_moves
             checking_pieces |= test_checked_piece
 
         rook_moves = self._get_rook_moves(index)
-        search_field |= rook_moves
         test_checked_piece = rooks & rook_moves
+        # print(utils.bin_to_string(rooks))
+        # print()
+        # print(utils.bin_to_string(rook_moves))
+        # print()
+        # print(utils.bin_to_string(test_checked_piece))
+        # print()
         if test_checked_piece:
+            search_field |= rook_moves
             checking_pieces |= test_checked_piece
-
         queen_moves = self._get_queen_moves(index)
-        search_field |= queen_moves
         test_checked_piece = queens & queen_moves
         if test_checked_piece:
+            search_field |= queen_moves
             checking_pieces |= test_checked_piece
 
         # a call to get_king_moves cannot be made to avoid an infinite recursion, so the positions must be found manually
@@ -487,9 +500,9 @@ class MoveGenerator:
             if bottom_index >= 0 and self._is_next_to(index, bottom_index):
                 tentative_king_positions |= 1 << bottom_index
 
-        search_field |= tentative_king_positions
         test_checked_piece = tentative_king_positions & king
         if test_checked_piece:
+            search_field |= tentative_king_positions
             checking_pieces |= test_checked_piece
 
         
@@ -508,7 +521,10 @@ class MoveGenerator:
             king = self.board.black_king
         
         king_index = utils.singleton_board_to_index(king)
-        attacking = self._in_check(king_index, king_index)[0]
+        king_check = self._in_check(king_index, king_index)
+        attacking = king_check[0]
+
+        # print(utils.bin_to_string(king_check[1]))
 
         # verify double check (no moves means automatic checkmate)
         if attacking and (attacking & (attacking - 1)) > 0:
@@ -519,14 +535,17 @@ class MoveGenerator:
         self.opponent = tmp
   
         attacking_index = utils.singleton_board_to_index(attacking)
-        if not self._in_check(attacking_index, attacking_index)[0]:
+        attacker_check = self._in_check(attacking_index, attacking_index)
+
+        if not attacker_check[0]:
             return True
+        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
         
         return False
         
         # check if the checking piece cant be captured
         # check if the line of attack can't be blocked
-        # for both these situations, check that 
+        
 
     '''
         determines whether a given cell a is next to a given cell b. This is to manage out of board errors when doing bitshifts
