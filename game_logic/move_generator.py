@@ -397,24 +397,8 @@ class MoveGenerator:
                 moves |= 1 << bottom_index
         self.board.set_piece(tmp_king, index)
         return moves
-
-    '''
-        Determines whether moving the king to a given index will put the king in check or not.
-        This is done by having the index imitate all the possible piece moves (e.g. pawn moves, bishops moves, etc.)
-        and comparing those move sets to the opponents actual pieces. 
-        If the two overlap (i.e. if the imitated pawn moves overlaps with the opponent pawn moves), the king would be in check.
-        This is done for evey piece.
-
-        PARAMS 
-        index: an integer identifying the cell the king may tentatively be able to move to
-        relative_to: an integer identifying the cell from with the king originates 
-    '''
-
-    def _in_check(self, index, relative_to):
-        # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
-        if not self._is_next_to(index, relative_to):
-            return 1 # i.e. True
-
+    
+    def swap_piece_sets(self):
         # determine which piece color to compare to when sensing
         if self.opponent == self.board.black_pieces:
             # set opponent piece set
@@ -440,6 +424,26 @@ class MoveGenerator:
             # set opponent and player
             self.opponent = self.board.white_pieces
             self.player = self.board.black_pieces
+        return pawns, bishops, knights, rooks, queens, king
+
+    '''
+        Determines whether moving the king to a given index will put the king in check or not.
+        This is done by having the index imitate all the possible piece moves (e.g. pawn moves, bishops moves, etc.)
+        and comparing those move sets to the opponents actual pieces. 
+        If the two overlap (i.e. if the imitated pawn moves overlaps with the opponent pawn moves), the king would be in check.
+        This is done for evey piece.
+
+        PARAMS 
+        index: an integer identifying the cell the king may tentatively be able to move to
+        relative_to: an integer identifying the cell from with the king originates 
+    '''
+
+    def _in_check(self, index, relative_to):
+        # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
+        if not self._is_next_to(index, relative_to):
+            return 1 # i.e. True
+        
+        pawns, bishops, knights, rooks, queens, king = self.swap_piece_sets()
         
         checking_pieces = 0
         test_checked_piece = 0
@@ -457,6 +461,9 @@ class MoveGenerator:
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
+        print(utils.bin_to_string(self._get_rook_moves(index)))
+        print()
+        print(utils.bin_to_string(rooks))
         test_checked_piece = rooks & self._get_rook_moves(index)
         if test_checked_piece:
             checking_pieces |= test_checked_piece
@@ -485,6 +492,9 @@ class MoveGenerator:
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
+        
+        self.swap_piece_sets()
+
         # true if king in check, false otherwise
         return checking_pieces
     
@@ -494,14 +504,15 @@ class MoveGenerator:
     def _in_mate(self, piece):
         player = self.board.get_piece_color(piece)
         opponent = self.board.get_opponent_piece_color(piece)
+
         king = 0
-        if player == self.board.white_pieces:
-            king = self.board.white_king
-        else:
+        king = self.board.white_king
+        if player == self.board.black_king:
             king = self.board.black_king
         
         king_index = int(round(math.log(king, 2)))
         attacked = self._in_check(king_index, king_index)
+        print()
         return attacked
 
         
