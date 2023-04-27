@@ -382,6 +382,8 @@ class MoveGenerator:
     '''
 
     def _get_king_moves(self, index):
+        tmp_king = self.board.get_piece(index)
+        self.board.set_piece(constants.EMPTY,index)
         moves = 0
         for i in [1, 7, 8, 9]:
             top_index = index + i
@@ -393,7 +395,7 @@ class MoveGenerator:
                 moves |= 1 << top_index
             if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index):
                 moves |= 1 << bottom_index
-
+        self.board.set_piece(tmp_king, index)
         return moves
 
     '''
