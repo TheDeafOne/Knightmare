@@ -397,34 +397,7 @@ class MoveGenerator:
                 moves |= 1 << bottom_index
         self.board.set_piece(tmp_king, index)
         return moves
-    
-    def swap_piece_sets(self):
-        # determine which piece color to compare to when sensing
-        if self.opponent == self.board.black_pieces:
-            # set opponent piece set
-            pawns = self.board.black_pawns
-            bishops = self.board.black_bishops
-            knights = self.board.black_knights
-            rooks = self.board.black_rooks
-            queens = self.board.black_queens
-            king = self.board.black_king
-
-            # set opponent and player
-            self.opponent = self.board.black_pieces
-            self.player = self.board.white_pieces
-        else:
-            # set opponent piece set
-            pawns = self.board.white_pawns
-            bishops = self.board.white_bishops
-            knights = self.board.white_knights
-            rooks = self.board.white_rooks
-            queens = self.board.white_queens
-            king = self.board.white_king
-
-            # set opponent and player
-            self.opponent = self.board.white_pieces
-            self.player = self.board.black_pieces
-        return pawns, bishops, knights, rooks, queens, king
+   
 
     '''
         Determines whether moving the king to a given index will put the king in check or not.
@@ -443,12 +416,34 @@ class MoveGenerator:
         if not self._is_next_to(index, relative_to):
             return 1 # i.e. True
         
-        pawns, bishops, knights, rooks, queens, king = self.swap_piece_sets()
+        # determine which piece color to compare to when sensing
+        if self.opponent == self.board.black_pieces:
+            # set opponent piece set
+            pawns = self.board.black_pawns
+            bishops = self.board.black_bishops
+            knights = self.board.black_knights
+            rooks = self.board.black_rooks
+            queens = self.board.black_queens
+            king = self.board.black_king
+
+        else:
+            # set opponent piece set
+            pawns = self.board.white_pawns
+            bishops = self.board.white_bishops
+            knights = self.board.white_knights
+            rooks = self.board.white_rooks
+            queens = self.board.white_queens
+            king = self.board.white_king
         
         checking_pieces = 0
         test_checked_piece = 0
 
         # determine what moves would cause a check, if any
+        print(utils.index_to_square(index))
+        print(utils.bin_to_string(self._get_pawn_moves(index)))
+        print()
+        print(utils.bin_to_string(pawns))
+        print()
         test_checked_piece = pawns & self._get_pawn_moves(index)
         if test_checked_piece:
             checking_pieces |= test_checked_piece
@@ -490,8 +485,6 @@ class MoveGenerator:
             checking_pieces |= test_checked_piece
 
         
-        self.swap_piece_sets()
-
         # true if king in check, false otherwise
         return checking_pieces
     
@@ -501,16 +494,20 @@ class MoveGenerator:
     def _in_mate(self, piece):
         self.player = self.board.get_piece_color(piece)
         self.opponent = self.board.get_opponent_piece_color(piece)
-
-        king = 0
+        
         king = self.board.white_king
-        if self.player == self.board.black_king:
+        if self.player == self.board.black_pieces:
             king = self.board.black_king
         
-        king_index = int(round(math.log(king, 2)))
-        attacked = self._in_check(king_index, king_index)
-        return attacked
+        king_index = utils.singleton_board_to_index(king)
+        attacking = self._in_check(king_index, king_index)
 
+        # verify double check (no moves means automatic checkmate)
+        if attacking and (attacking & (attacking - 1)) > 0:
+            return True
+  
+        attacking_index = utils.singleton_board_to_index(attacking)
+        return self._in_check(attacking_index, attacking_index)
         
         # check if the checking piece cant be captured
         # check if the line of attack can't be blocked
