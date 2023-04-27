@@ -1,3 +1,5 @@
+import math
+
 class BoardUtils:
     '''
         A method to convert a given square into an index
@@ -33,6 +35,18 @@ class BoardUtils:
             board.append('\n')
         return ''.join(board[::-1][1:])
     
+    def singleton_board_to_index(integer_board):
+        # verify the board is a power of two (i.e. a singleton board)
+        if (integer_board & (integer_board - 1)) > 0 or integer_board == 0:
+            return -1
+        return int(round(math.log(integer_board, 2))) # gets the index of the piece
+    
+    def board_to_indexes(integer_board):
+        return [i for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
+            
+
+
+
 
 class BoardConstants:
     # numeric constants
