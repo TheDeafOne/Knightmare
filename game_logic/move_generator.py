@@ -1,5 +1,5 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
-
+import math
 
 class MoveGenerator:
     '''
@@ -411,7 +411,7 @@ class MoveGenerator:
     def _in_check(self, index, relative_to):
         # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
         if not self._is_next_to(index, relative_to):
-            return True
+            return 1 # i.e. True
 
         # determine which piece color to compare to when sensing
         if self.opponent == self.board.black_pieces:
@@ -438,20 +438,32 @@ class MoveGenerator:
             # set opponent and player
             self.opponent = self.board.white_pieces
             self.player = self.board.black_pieces
+        
+        checking_pieces = 0
+        test_checked_piece = 0
 
         # determine what moves would cause a check, if any
-        if pawns & self._get_pawn_moves(index):
-            return True
-        if bishops & self._get_bishop_moves(index):
-            return True
-        if knights & self._get_knight_moves(index):
-            return True
-        if rooks & self._get_rook_moves(index):
-            return True
-        if queens & self._get_queen_moves(index):
-            return True
+        test_checked_piece = pawns & self._get_pawn_moves(index)
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
 
-        # a call to get_king_moves cannot be made to avoid an infinite loop, so the positions must be found manually
+        test_checked_piece = bishops & self._get_bishop_moves(index)
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
+
+        test_checked_piece = knights & self._get_knight_moves(index)
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
+
+        test_checked_piece = rooks & self._get_rook_moves(index)
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
+
+        test_checked_piece = queens & self._get_queen_moves(index)
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
+
+        # a call to get_king_moves cannot be made to avoid an infinite recursion, so the positions must be found manually
         tentative_king_positions = 0
 
         # cycle through each position in a 1 cell radius of the given index
@@ -467,11 +479,33 @@ class MoveGenerator:
             if bottom_index >= 0 and self._is_next_to(index, bottom_index):
                 tentative_king_positions |= 1 << bottom_index
 
-        if tentative_king_positions & king:
-            return True
+        test_checked_piece = tentative_king_positions & king
+        if test_checked_piece:
+            checking_pieces |= test_checked_piece
 
-        # king is not in check
-        return False
+        # true if king in check, false otherwise
+        return checking_pieces
+    
+    '''
+        this function assumes no moves are available to the given king
+    '''
+    def _in_mate(self, piece):
+        player = self.board.get_piece_color(piece)
+        opponent = self.board.get_opponent_piece_color(piece)
+        king = 0
+        if player == self.board.white_pieces:
+            king = self.board.white_king
+        else:
+            king = self.board.black_king
+        
+        king_index = int(round(math.log(king, 2)))
+        attacked = self._in_check(king_index, king_index)
+        return attacked
+
+        
+        # check if the checking piece cant be captured
+        # check if the line of attack can't be blocked
+        # for both these situations, check that 
 
     '''
         determines whether a given cell a is next to a given cell b. This is to manage out of board errors when doing bitshifts
