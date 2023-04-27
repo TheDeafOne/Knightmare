@@ -97,7 +97,9 @@ class MoveGenerator:
 
     def generate_moves(self, square):
         # convert square to index and get piece
-        index = utils.square_to_index(square)
+        index = square
+        if type(square) == str:
+            index = utils.square_to_index(square)
         piece = self.board.get_piece(index)
 
         # initialize player and opponent piece sets
@@ -537,10 +539,17 @@ class MoveGenerator:
         attacking_index = utils.singleton_board_to_index(attacking)
         attacker_check = self._in_check(attacking_index, attacking_index)
 
+        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
+        line_of_attack = attacker_moves & king_check[1]
+        blocking_pieces = utils.board_to_indexes(self.opponent)
+        blocking_pieces.remove(king_index)
+        for piece in blocking_pieces:
+            blocking_moves = self.generate_moves(piece)
+            if blocking_moves & line_of_attack:
+                return False
+        
         if not attacker_check[0]:
             return True
-        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
-        
         return False
         
         # check if the checking piece cant be captured
