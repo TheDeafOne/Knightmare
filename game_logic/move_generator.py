@@ -391,9 +391,9 @@ class MoveGenerator:
             top_mask = 1 << top_index
             if bottom_index >= 0:
                 bottom_mask = 1 << bottom_index
-            if top_index >= 0 and not top_mask & self.player and not self._in_check(top_index, index):
+            if top_index >= 0 and not top_mask & self.player and not self._in_check(top_index, index)[0]:
                 moves |= 1 << top_index
-            if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index):
+            if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index)[0]:
                 moves |= 1 << bottom_index
         self.board.set_piece(tmp_king, index)
         return moves
@@ -413,8 +413,8 @@ class MoveGenerator:
 
     def _in_check(self, index, relative_to):
         # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
-        if not self._is_next_to(index, relative_to):
-            return 1 # i.e. True
+        if not self._is_next_to(index, relative_to) or index < 0:
+            return -1 # i.e. True
         
         # determine which piece color to compare to when sensing
         if self.opponent == self.board.black_pieces:
@@ -438,29 +438,36 @@ class MoveGenerator:
         checking_pieces = 0
         test_checked_piece = 0
 
+        search_field = 0
+        
         # determine what moves would cause a check, if any
-        print(utils.index_to_square(index))
-        print(utils.bin_to_string(self._get_pawn_moves(index)))
-        print()
-        print(utils.bin_to_string(pawns))
-        print()
-        test_checked_piece = pawns & self._get_pawn_moves(index)
+        pawn_moves = self._get_pawn_moves(index)
+        search_field |= pawn_moves
+        test_checked_piece = pawns & pawn_moves
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
-        test_checked_piece = bishops & self._get_bishop_moves(index)
+        knight_moves = self._get_knight_moves(index)
+        search_field |= knight_moves
+        test_checked_piece = knights & knight_moves
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
-        test_checked_piece = knights & self._get_knight_moves(index)
+        bishop_moves = self._get_bishop_moves(index)
+        search_field |= bishop_moves
+        test_checked_piece = bishops & bishop_moves
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
-        test_checked_piece = rooks & self._get_rook_moves(index)
+        rook_moves = self._get_rook_moves(index)
+        search_field |= rook_moves
+        test_checked_piece = rooks & rook_moves
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
-        test_checked_piece = queens & self._get_queen_moves(index)
+        queen_moves = self._get_queen_moves(index)
+        search_field |= queen_moves
+        test_checked_piece = queens & queen_moves
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
@@ -480,13 +487,14 @@ class MoveGenerator:
             if bottom_index >= 0 and self._is_next_to(index, bottom_index):
                 tentative_king_positions |= 1 << bottom_index
 
+        search_field |= tentative_king_positions
         test_checked_piece = tentative_king_positions & king
         if test_checked_piece:
             checking_pieces |= test_checked_piece
 
         
         # true if king in check, false otherwise
-        return checking_pieces
+        return checking_pieces, search_field
     
     '''
         this function assumes no moves are available to the given king
@@ -500,14 +508,21 @@ class MoveGenerator:
             king = self.board.black_king
         
         king_index = utils.singleton_board_to_index(king)
-        attacking = self._in_check(king_index, king_index)
+        attacking = self._in_check(king_index, king_index)[0]
 
         # verify double check (no moves means automatic checkmate)
         if attacking and (attacking & (attacking - 1)) > 0:
             return True
+    
+        tmp = self.player
+        self.player = self.opponent
+        self.opponent = tmp
   
         attacking_index = utils.singleton_board_to_index(attacking)
-        return self._in_check(attacking_index, attacking_index)
+        if not self._in_check(attacking_index, attacking_index)[0]:
+            return True
+        
+        return False
         
         # check if the checking piece cant be captured
         # check if the line of attack can't be blocked
