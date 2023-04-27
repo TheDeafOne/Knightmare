@@ -321,7 +321,6 @@ class MoveGenerator:
 
     def _get_rook_moves(self, index):
         moves = 0
-
         # Get all possible moves to the right
         for i in range(index + 1, index // 8 * 8 + 8):
             if self._is_empty(i):
@@ -333,7 +332,6 @@ class MoveGenerator:
             else:
                 # stopped by player piece
                 break
-
         # Get all possible moves to the left
         for i in range(index - 1, index // 8 * 8 - 1, -1):
             if self._is_empty(i):
@@ -456,27 +454,22 @@ class MoveGenerator:
         if test_checked_piece:
             search_field |= pawn_moves
             checking_pieces |= test_checked_piece
-
+        
         knight_moves = self._get_knight_moves(index)
         test_checked_piece = knights & knight_moves
         if test_checked_piece:
             search_field |= knight_moves
             checking_pieces |= test_checked_piece
-
+        
         bishop_moves = self._get_bishop_moves(index)
         test_checked_piece = bishops & bishop_moves
         if test_checked_piece:
             search_field |= bishop_moves
             checking_pieces |= test_checked_piece
-
+        
         rook_moves = self._get_rook_moves(index)
         test_checked_piece = rooks & rook_moves
-        # print(utils.bin_to_string(rooks))
-        # print()
-        # print(utils.bin_to_string(rook_moves))
-        # print()
-        # print(utils.bin_to_string(test_checked_piece))
-        # print()
+        
         if test_checked_piece:
             search_field |= rook_moves
             checking_pieces |= test_checked_piece
@@ -559,13 +552,23 @@ class MoveGenerator:
         index = square
         if type(square) == str:
             index = utils.square_to_index(square)
+
         piece = self.board.get_piece(index)
-        king = constants.WHITE_KING
+        king_board = self.board.white_king
+        self.player = self.board.white_pieces
+        self.opponent = self.board.black_pieces
         if self.board.get_piece_color(piece) == self.board.black_pieces:
-            king = constants.BLACK_KING
+            king_board = self.board.black_king
+            self.player = self.board.black_pieces
+            self.opponent = self.board.white_pieces
+
+        king_index = utils.singleton_board_to_index(king_board)
+
+        self.board.set_piece(constants.EMPTY, index)
+        king_in_check = self._in_check(king_index, king_index)
+        self.board.set_piece(piece, index)
+        return king_in_check[0] != 0
         
-        
-        pass
 
     '''
         determines whether a given cell a is next to a given cell b. This is to manage out of board errors when doing bitshifts
