@@ -46,17 +46,6 @@ class Chess:
         self.piece_map = dict(
             zip(["n", "p", "b", "r", "q", "k", "P", "N", "B", "R", "Q", "K"], self.pieces))
 
-        # Create the chess board
-        self.draw_board = [
-            ["r", "n", "b", "q", "k", "b", "n", "r"],
-            ["p", "p", "p", "p", "p", "p", "p", "p"],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["", "", "", "", "", "", "", ""],
-            ["P", "P", "P", "P", "P", "P", "P", "P"],
-            ["R", "N", "B", "Q", "K", "B", "N", "R"]
-        ]
 
         # game states
         self.game_state = "start_menu"
@@ -90,6 +79,9 @@ class Chess:
                         if quit_button.collidepoint(mouse_position):
                             pygame.quit()
                             quit()
+                        if options_button.collidepoint(mouse_position):
+                            print('go to options page')
+
                 elif self.game_state == "options_menu":
                     self.draw_options_menu()
                 elif self.game_state == "game":
@@ -141,10 +133,24 @@ class Chess:
                                     self.player_moves = []
                                     self.player_focus = None
                                     self.player_state = "selection"
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            self.player_state = "selection"
+                            self.current_player_color = "W"
+                            self.player_moves = []
+                            self.player_focus = None
+                            self.winner = ''
+                            self.window.fill(self.WHITE)
+
+                            self.board = Board()
+                            self.player = self.board.white_pieces
+                            self.opponent = self.board.black_pieces
+
+                            self.game_state = "start_menu"
+
                 elif self.game_state == "over":
                     self.draw_game()
                     self.draw_winner()
-
 
 
             # Update the display
@@ -154,21 +160,25 @@ class Chess:
         # Create the font object
         title_font = pygame.font.SysFont(None, 50)
         option_font = pygame.font.SysFont(None, 40)
+        notif_font = pygame.font.SysFont(None, 20)
 
         # Create the text objects
         title_text = title_font.render("Choose an Option", True, self.BLACK)
+        notif_text = notif_font.render("Press escape any time to return to this menu", True, self.BLACK)
         start_text = option_font.render("Start", True, self.BLACK)
         options_text = option_font.render("Options", True, self.BLACK)
         quit_text = option_font.render("Quit", True, self.BLACK)
 
         # Get the dimensions of the text objects
         title_text_rect = title_text.get_rect()
+        notif_text_rect = notif_text.get_rect()
         start_text_rect = start_text.get_rect()
         options_text_rect = options_text.get_rect()
         quit_text_rect = quit_text.get_rect()
 
         # Set the positions of the text objects
         title_text_rect.center = (self.WINDOW_SIZE[0] // 2, 50)
+        notif_text_rect.center = (self.WINDOW_SIZE[0] // 2, 55 + title_text.get_height())
         start_text_rect.center = (self.WINDOW_SIZE[0] // 2, 150)
         options_text_rect.center = (self.WINDOW_SIZE[0] // 2, 250)
         quit_text_rect.center = (self.WINDOW_SIZE[0] // 2, 350)
@@ -177,6 +187,7 @@ class Chess:
 
         # Draw the text objects
         self.window.blit(title_text, title_text_rect)
+        self.window.blit(notif_text, notif_text_rect)
         self.window.blit(start_text, start_text_rect)
         self.window.blit(options_text, options_text_rect)
         self.window.blit(quit_text, quit_text_rect)
@@ -244,14 +255,21 @@ class Chess:
     def draw_winner(self):
         winner_font = pygame.font.SysFont("Arial", 50, bold=True)
         winner = "black" if self.winner == 'B' else "white"
-        winner_label = winner_font.render(winner + " won", True, (0,0,0) if winner == "black" else (255, 255, 255))
-        outline_surface = pygame.Surface((winner_label.get_width() + 2, winner_label.get_height() + 2))
-        outline_surface.fill(pygame.Color("white" if winner == "black" else "black"))
-        
+        text_color = (0,0,0) if winner == "black" else (255, 255, 255)
+
+        winner_label = winner_font.render(winner + " won", True, text_color)
         text_width, text_height = winner_label.get_width(), winner_label.get_height()
-        outline_width, outline_height = outline_surface.get_width(), outline_surface.get_height()
-        self.window.blit(outline_surface, (self.WINDOW_SIZE[0]//2-text_width//2,self.WINDOW_SIZE[0]//2-text_height))
-        self.window.blit(winner_label, (self.WINDOW_SIZE[0]//2-text_width//2,self.WINDOW_SIZE[0]//2-text_height))
+        outline_surface = pygame.Surface((text_width + 2, text_height*1.5))
+        outline_surface.fill(pygame.Color("white" if winner == "black" else "black"))
+
+        escape_font = pygame.font.SysFont("Arial", 25, bold=True)
+        escape_label = escape_font.render("Press escape", True, text_color)
+        
+        
+        notif_position = (self.WINDOW_SIZE[0]//2-text_width//2,self.WINDOW_SIZE[0]//2-text_height)
+        self.window.blit(outline_surface, notif_position)
+        self.window.blit(winner_label, notif_position)
+        self.window.blit(escape_label, (notif_position[0]+text_width//2-escape_label.get_width()//2, notif_position[1] + text_height))
 
 
 
