@@ -94,6 +94,7 @@ class MiniMax():
 
                             beta = min(best_val, beta)
                             if (beta <= alpha):
+                                break_cond = True
                                 break
             return best_val
 

@@ -112,24 +112,87 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color):
-        white_count = 30*self.white_bishops.bit_count() +  \
-            10*self.white_pawns.bit_count() + \
-            50*self.white_rooks.bit_count() + \
-            30*self.white_knights.bit_count() + \
-            90*self.white_queens.bit_count() + \
-            900*self.white_king.bit_count()
-            
-        black_count = 30*self.black_bishops.bit_count() +  \
-            10*self.black_pawns.bit_count() + \
-            50*self.black_rooks.bit_count() + \
-            30*self.black_knights.bit_count() + \
-            90*self.black_queens.bit_count() + \
-            900*self.black_king.bit_count()
+        # 1) Get initial piece scores
+        Opening = False
+        Middle = False
+        Endgame = False
+        
+        queen = 9.0
+        rook = 4.5
+        knight = 3.0
+        bishop = 3.0
+        pawn = 1.0
+        king = 100.0 # exclude king? it's not included in the doc
         
         if (color == constants.WHITE):
-            return white_count - black_count
+            pawn_count = self.white_pawns.bit_count()
         else:
-            return black_count - white_count
+            pawn_count = self.black_pawns.bit_count()
+
+        overall_piece_strength = bishop*self.white_bishops.bit_count() +  \
+            rook*self.white_rooks.bit_count() + \
+            knight*self.white_knights.bit_count() + \
+            queen*self.white_queens.bit_count() + \
+            king*self.white_king.bit_count() + \
+            bishop*self.black_bishops.bit_count() +  \
+            rook*self.black_rooks.bit_count() + \
+            knight*self.black_knights.bit_count() + \
+            queen*self.black_queens.bit_count() + \
+            king*self.black_king.bit_count()
+        
+        if (overall_piece_strength >= 45): # opening
+            Middle = True
+            Opening = True
+        elif (overall_piece_strength >= 30): # middle game
+            Middle = True
+            pawn = pawn * 0.05
+        elif (overall_piece_strength >= 15): # Early endgame
+            Endgame = True
+            pawn = pawn * 1.10
+        else:  # late endgame
+            Endgame = True
+            pawn = pawn * 1.15
+        
+        if (pawn_count >= 13): # closed positions
+            queen = 0.95*queen
+            rook = 0.85*rook
+            bishop = bishop*1.05
+            knight = knight*1.15
+        elif (pawn_count >= 9): # semi-closed positions
+            queen = 0.95*queen
+            rook = 0.90*rook
+            bishop = bishop*1.05
+            knight = knight*1.10
+        elif (pawn_count >= 5): # semi-open positions
+            queen = 1.20*queen
+            rook = 1.10*rook
+            bishop = bishop*1.15
+            knight = knight*0.9
+        else: # open positions
+            queen = 1.30*queen
+            rook = 1.10*rook
+            bishop = bishop*1.20
+            knight = knight*0.85
+            
+        # TODO: add extra conditions for openning/middlegame/endgame (see doc)
+        
+        # Return score (TODO: alter for weights for individual pieces (individual pieces will decrease or increase in value depening on the previous TODO))
+        if (color == constants.WHITE):
+            return bishop*self.white_bishops.bit_count() +  \
+            pawn*self.white_pawns.bit_count() + \
+            rook*self.white_rooks.bit_count() + \
+            knight*self.white_knights.bit_count() + \
+            queen*self.white_queens.bit_count() + \
+            king*self.white_king.bit_count()
+        else:
+            return bishop*self.black_bishops.bit_count() +  \
+            pawn*self.black_pawns.bit_count() + \
+            rook*self.black_rooks.bit_count() + \
+            knight*self.black_knights.bit_count() + \
+            queen*self.black_queens.bit_count() + \
+            king*self.black_king.bit_count()
+
+        return 0
         
          
     
