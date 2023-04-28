@@ -64,6 +64,7 @@ class Chess:
         self.current_player_color = "W"
         self.player_moves = []
         self.player_focus = None
+        self.winner = ''
 
         # Create the window
         pygame.init()
@@ -115,7 +116,13 @@ class Chess:
                                             self.board.get_moves(position))
                                 else:
                                     # move piece
-                                    self.board.move_piece(self.player_focus, position)
+                                    is_mate = self.board.move_piece(self.player_focus, position)
+                                    print(is_mate)
+                                    # verify checkmate and switch state if true
+                                    if is_mate:
+                                        self.game_state = "over"
+                                        self.winner = self.current_player_color
+
                                     print('move: ', (self.current_player_color, self.player_focus, position))
                                     # switch players
                                     if self.current_player_color == "W":
@@ -134,6 +141,9 @@ class Chess:
                                     self.player_moves = []
                                     self.player_focus = None
                                     self.player_state = "selection"
+                elif self.game_state == "over":
+                    self.draw_game()
+                    self.draw_winner()
 
 
 
@@ -230,6 +240,18 @@ class Chess:
             for move in self.player_moves:
                 row, col = utils.square_to_row_col(move)
                 self.highlight_square(col, row)
+
+    def draw_winner(self):
+        winner_font = pygame.font.SysFont("Arial", 50, bold=True)
+        winner = "black" if self.winner == 'B' else "white"
+        winner_label = winner_font.render(winner + " won", True, (0,0,0) if winner == "black" else (255, 255, 255))
+        outline_surface = pygame.Surface((winner_label.get_width() + 2, winner_label.get_height() + 2))
+        outline_surface.fill(pygame.Color("white" if winner == "black" else "black"))
+        
+        text_width, text_height = winner_label.get_width(), winner_label.get_height()
+        outline_width, outline_height = outline_surface.get_width(), outline_surface.get_height()
+        self.window.blit(outline_surface, (self.WINDOW_SIZE[0]//2-text_width//2,self.WINDOW_SIZE[0]//2-text_height))
+        self.window.blit(winner_label, (self.WINDOW_SIZE[0]//2-text_width//2,self.WINDOW_SIZE[0]//2-text_height))
 
 
 
