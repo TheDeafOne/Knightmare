@@ -567,7 +567,15 @@ class MoveGenerator:
         self.board.set_piece(constants.EMPTY, index)
         king_in_check = self._in_check(king_index, king_index)
         self.board.set_piece(piece, index)
-        return king_in_check[0] != 0
+        
+        attacking, line_of_attack = 0, 0
+        if king_in_check[0]:
+            attacking = king_in_check[0]
+            attacking_index = utils.singleton_board_to_index(attacking)
+            attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
+            line_of_attack = attacker_moves & king_in_check[1]
+
+        return attacking, line_of_attack
         
 
     '''
