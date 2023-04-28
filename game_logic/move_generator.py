@@ -119,10 +119,20 @@ class MoveGenerator:
         elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
             move_board = self._get_queen_moves(index)
         elif piece == constants.WHITE_KING or piece == constants.BLACK_KING:
-            move_board = self._get_king_moves(index)
+            return self._get_king_moves(index)
+        
+        king_index = utils.singleton_board_to_index(self.board.white_king if self.player == self.board.white_pieces else self.board.black_king)
 
         is_piece_pinned = self._is_pinned(index)
-        if is_piece_pinned[0]:
+        is_king_in_check = self._in_check(king_index, king_index)
+        if is_king_in_check[0]:
+            move_board &= is_king_in_check[0]
+        if is_piece_pinned[1]:
+            print(utils.bin_to_string(is_piece_pinned[0]))
+            print()
+            print(utils.bin_to_string(is_piece_pinned[1]))
+            print()
+            move_board |= is_piece_pinned[0]
             move_board &= is_piece_pinned[1]
         return move_board
 
@@ -575,9 +585,6 @@ class MoveGenerator:
             line_of_attack = attacker_moves & king_in_check[1]
         self.board.set_piece(piece, index)
         
-        
-
-
         return attacking, line_of_attack
         
 
