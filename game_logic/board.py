@@ -174,23 +174,24 @@ class Board:
             bishop = bishop*1.20
             knight = knight*0.85
             
-        # TODO: add extra conditions for openning/middlegame/endgame (see doc)
-        
-        # Return score (TODO: alter for weights for individual pieces (individual pieces will decrease or increase in value depening on the previous TODO))
+        # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
+        score_mod = 0.0 # add to the returned score based on various conditions
+
+        # Return score
         if (color == constants.WHITE):
             return bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
             rook*self.white_rooks.bit_count() + \
             knight*self.white_knights.bit_count() + \
             queen*self.white_queens.bit_count() + \
-            king*self.white_king.bit_count()
+            king*self.white_king.bit_count() + score_mod
         else:
             return bishop*self.black_bishops.bit_count() +  \
             pawn*self.black_pawns.bit_count() + \
             rook*self.black_rooks.bit_count() + \
             knight*self.black_knights.bit_count() + \
             queen*self.black_queens.bit_count() + \
-            king*self.black_king.bit_count()
+            king*self.black_king.bit_count() + score_mod
 
         return 0
         
