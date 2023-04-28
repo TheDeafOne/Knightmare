@@ -125,8 +125,7 @@ class MoveGenerator:
 
         is_piece_pinned = self._is_pinned(index)
         is_king_in_check = self._in_check(king_index, king_index)
-        if is_king_in_check[0]:
-            move_board &= is_king_in_check[0]
+        
         if is_piece_pinned[1]:
             print(utils.bin_to_string(is_piece_pinned[0]))
             print()
@@ -134,6 +133,8 @@ class MoveGenerator:
             print()
             move_board |= is_piece_pinned[0]
             move_board &= is_piece_pinned[1]
+        elif is_king_in_check[0]:
+            move_board &= is_king_in_check[0]
         return move_board
 
     '''
