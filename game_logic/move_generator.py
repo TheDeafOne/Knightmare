@@ -106,21 +106,25 @@ class MoveGenerator:
         self.opponent = self.board.get_opponent_piece_color(piece)
         self.player = self.board.get_piece_color(piece)
 
+        move_board = 0
         # Generate moves based on piece type
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
-            return self._get_pawn_moves(index)
+            move_board = self._get_pawn_moves(index)
         elif piece == constants.WHITE_KNIGHT or piece == constants.BLACK_KNIGHT:
-            return self._get_knight_moves(index)
+            move_board = self._get_knight_moves(index)
         elif piece == constants.WHITE_BISHOP or piece == constants.BLACK_BISHOP:
-            return self._get_bishop_moves(index)
+            move_board = self._get_bishop_moves(index)
         elif piece == constants.WHITE_ROOK or piece == constants.BLACK_ROOK:
-            return self._get_rook_moves(index)
+            move_board = self._get_rook_moves(index)
         elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
-            return self._get_queen_moves(index)
+            move_board = self._get_queen_moves(index)
         elif piece == constants.WHITE_KING or piece == constants.BLACK_KING:
-            return self._get_king_moves(index)
+            move_board = self._get_king_moves(index)
 
-        return 0  # square given was empty
+        is_piece_pinned = self._is_pinned(index)
+        if is_piece_pinned:
+            move_board &= is_piece_pinned[1]
+        return move_board
 
     '''
         gets all the possible moves a pawn at the given index could make
@@ -566,14 +570,16 @@ class MoveGenerator:
 
         self.board.set_piece(constants.EMPTY, index)
         king_in_check = self._in_check(king_index, king_index)
-        self.board.set_piece(piece, index)
-        
         attacking, line_of_attack = 0, 0
         if king_in_check[0]:
             attacking = king_in_check[0]
             attacking_index = utils.singleton_board_to_index(attacking)
             attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
             line_of_attack = attacker_moves & king_in_check[1]
+        self.board.set_piece(piece, index)
+        
+        
+
 
         return attacking, line_of_attack
         
