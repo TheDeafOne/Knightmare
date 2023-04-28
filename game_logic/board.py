@@ -271,6 +271,11 @@ class Board:
         # save latest move
         self.last_move = (from_piece,from_square,to_piece,to_square)
 
+        king = self.white_king
+        if self.get_piece_color(from_piece) == self.white_pieces:
+            king = self.black_king
+        return self.move_generator._in_mate(king)
+
     '''
         undo the last move made
 
