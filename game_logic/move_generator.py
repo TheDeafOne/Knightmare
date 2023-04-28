@@ -122,7 +122,7 @@ class MoveGenerator:
             move_board = self._get_king_moves(index)
 
         is_piece_pinned = self._is_pinned(index)
-        if is_piece_pinned:
+        if is_piece_pinned[0]:
             move_board &= is_piece_pinned[1]
         return move_board
 
@@ -184,7 +184,6 @@ class MoveGenerator:
                     moves |= mask << 1
                 if col > 0 and self.board.white_pieces & (mask >> 1):
                     moves |= mask >> 1
-
         return moves
 
     '''
@@ -522,8 +521,6 @@ class MoveGenerator:
         king_index = utils.singleton_board_to_index(king_board)
         king_check = self._in_check(king_index, king_index)
         attacking = king_check[0]
-
-        # print(utils.bin_to_string(king_check[1]))
 
         # verify double check (no moves means automatic checkmate)
         if attacking and (attacking & (attacking - 1)) > 0:
