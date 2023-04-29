@@ -106,6 +106,7 @@ class Board:
         self.black_queens = 0x8 << constants.ACROSS_BOARD
 
         self.last_move = tuple()
+        self.last_moves = []
         self.move_generator = MoveGenerator(self)        
          
     
@@ -127,7 +128,7 @@ class Board:
         sets a given piece to a given square
 
         PARAMS
-        piece: a character identifying the type of chess piece (e.g. constants.WHITE_KING for white King, constants.WHITE_QUEEN for white Queen, etc.)
+        piece: a character identifying the type of chess piece (e.g. 'K' for white King, 'Q' for white Queen, etc.)
         square: string or integer index identifying the cell on the board needing to be set
     '''
 
@@ -270,6 +271,11 @@ class Board:
         self.set_piece(constants.EMPTY, from_square)
         
         # save latest move
+        # if self.last_moves[:10] == [(), ('P', 'h2', '-', 'h4'), ('n', 'g8', '-', 'h6'), ('P', 'h4', '-', 'h5'), ('n', 'h6', '-', 'g4'), (), (), (), ('N', 'g1', '-', 'h3'), ('n', 'g4', 'P', 'f2')]:
+        #     print(self.get_board_string())
+        #     print(self.last_moves)
+        #     print()
+        self.last_moves.append(self.last_move)
         self.last_move = (from_piece,from_square,to_piece,to_square)
 
         king = self.white_king
@@ -283,8 +289,7 @@ class Board:
     '''
     def undo_last(self):
         if len(self.last_move) != 0:
-            self.set_piece(self.last_move[0],self.last_move[1])
-            self.set_piece(self.last_move[2],self.last_move[3])
+            self.move_piece(self.last_move[3],self.last_move[1])
             self.last_move = tuple()
 
 
@@ -372,6 +377,7 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color, winning_board):
+        return 0
         if (color == constants.WHITE):
             enemy_color = constants.BLACK
         else:
