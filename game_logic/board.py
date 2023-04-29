@@ -108,6 +108,7 @@ class Board:
 
         self.last_move = [1,1,1]
         self.last_last_move = [0,0,0]
+        self.last_moves = []
         self.move_generator = MoveGenerator(self)        
          
     
@@ -278,6 +279,7 @@ class Board:
         #     print(self.get_board_string())
         #     print(self.last_moves)
         #     print()
+        # self.last_moves.append(self.last_move)
         self.last_moves.append(self.last_move)
         self.last_move = (from_piece,from_square,to_piece,to_square)
         
@@ -405,9 +407,9 @@ class Board:
                 all_moves[piece].append((square,moves))     
         
         # 1) Get initial piece scores
-        Opening = False
-        Middle = False
-        Endgame = False
+        opening = False
+        middle = False
+        endgame = False
         
         queen = 9.0
         rook = 4.5
@@ -433,16 +435,16 @@ class Board:
             king*self.black_king.bit_count()
         
         if (overall_piece_strength >= 45): # opening
-            Middle = True
-            Opening = True
+            middle = True
+            opening = True
         elif (overall_piece_strength >= 30): # middle game
-            Middle = True
+            middle = True
             pawn = pawn * 0.05
         elif (overall_piece_strength >= 15): # Early endgame
-            Endgame = True
+            endgame = True
             pawn = pawn * 1.10
         else:  # late endgame
-            Endgame = True
+            endgame = True
             pawn = pawn * 1.15
         
         if (pawn_count >= 13): # closed positions
@@ -470,13 +472,13 @@ class Board:
         score_mod = 0.0 # add to the returned score based on various conditions
         
         if (winning_board): score_mod += 200.0   
-
-        score_mod += self.get_focal_points(color)
-        score_mod += self.get_development_order_points(color)
+        if opening:
+            score_mod += self.get_focal_points(color, all_moves)
+            score_mod += self.get_development_order_points(color)
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
         score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        self.get_king_security(all_moves, color)
+        # self.get_king_security(all_moves, color)
         #defense_pot = self.get_defensive_potential(all_moves,color,queen,rook,bishop,knight,pawn)
         #print("testing defensive pot: " + str(defense_pot))
         #score_mod += defense_pot
@@ -661,23 +663,18 @@ class Board:
                     immediate_shelter |= 1 << (index + 9)
             
         
-        
-
-        
-        
-            
-            
-            
 
 
     def get_focal_points(self, color, piece_moves):
         pawn_check = constants.WHITE_PAWN
         piece_color_check = constants.WHITE_PIECES
         queen_check = constants.WHITE_QUEEN
+        player = self.white_pieces
         if color == constants.BLACK:
             pawn_check = constants.BLACK_PAWN
             piece_color_check = constants.BLACK_PIECES
             queen_check = constants.BLACK_QUEEN
+            player = self.black_pieces
 
         evaluate_value = 0
         focal_square = ('e4','d4','e5','d5')
@@ -690,23 +687,24 @@ class Board:
             elif piece in piece_color_check:
                 evaluate_value += 0.2
 
-        focal_square_mask = 0x1818 << 8 * 2
-        pawn_moves = 0
-        for move_board in [move_board[1] for move_board in piece_moves[pawn_check]]:
-            pawn_moves |= move_board
-        pawn_moves &= focal_square_mask
+        focal_square_mask = 0x1818 << 8 * 3
+        wider_focal_square_mask = 0x3c24243c00 << 8
+        inner_moves = 0
+        for piece_type in piece_color_check:
+            for move_board in [move_board[1] for move_board in piece_moves[piece_type]]:
+                inner_moves |= move_board
+        inner_moves &= focal_square_mask
+        evaluate_value += inner_moves.bit_count() * 0.1
+        wider_focal_square_mask &= player
+        evaluate_value += wider_focal_square_mask.bit_count() * 0.1
 
-        
-
-        
-        
-
-        
         return evaluate_value
+
+
     
-    def get_development_order_points(self, color, game_stage):
+    def get_development_order_points(self, color):
         evaluate_value = 0.0
-        if game_stage[0] and self.last_move[0] == self.last_last_move[0]:
+        if self.last_move[0] == self.last_last_move[0]:
             evaluate_value -= 0.35
         
         knight_indexes = constants.WHITE_KNIGHT_INDEXES
