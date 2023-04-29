@@ -95,7 +95,7 @@ class MoveGenerator:
         an integer map of the possible moves the piece at the given square could make
     '''
 
-    def generate_moves(self, square):
+    def generate_moves(self, square, is_swapped = False):
         # convert square to index and get piece
         index = square
         if type(square) == str:
@@ -103,8 +103,12 @@ class MoveGenerator:
         piece = self.board.get_piece(index)
 
         # initialize player and opponent piece sets
-        self.opponent = self.board.get_opponent_piece_color(piece)
-        self.player = self.board.get_piece_color(piece)
+        if (is_swapped):
+            self.opponent = self.board.get_piece_color(piece)
+            self.player = self.board.get_opponent_piece_color(piece)
+        else:
+            self.opponent = self.board.get_opponent_piece_color(piece)
+            self.player = self.board.get_piece_color(piece)
 
         move_board = 0
         # Generate moves based on piece type
