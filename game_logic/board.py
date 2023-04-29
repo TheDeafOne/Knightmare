@@ -197,10 +197,10 @@ class Board:
         
         
         # universal mobility parameters
-        mobility = 0
-        half_mobility = 0
-        for moves in possible_moves:
-            half_moves = moves
+        # mobility = 0
+        # half_mobility = 0
+        # for moves in possible_moves:
+        #     half_moves = moves
 
         # Return score
         if (color == constants.WHITE):
@@ -222,15 +222,25 @@ class Board:
 
         return 0
     
-    def get_control_points(self, color):
+    def get_focal_points(self, color):
         focal_square_controls = ('cdef',3)
         if color == constants.BLACK:
             focal_square_controls = ('cdef',5)
-        rows = focal_square_controls[1]
 
-        for col in focal_square_controls[0]:
-            for row in range(rows, rows + 2):
-                square = col + str(row)
+        #TODO: handle 
+        # rows = focal_square_controls[1]
+        # evaluate_value = 0.0
+        # for col in focal_square_controls[0]:
+        #     for row in range(rows, rows + 2):
+        #         square = col + str(row)
+        #         piece = self.get_piece(square)
+        #         if piece == pawn_check:
+        #             evaluate_value += 0.4
+
+        focal_square = ('c3','d3','e3','f3')
+        # for square in focal_square
+
+
                 
     
     

@@ -57,7 +57,7 @@ def print_initial_board():
 
 def focal_control_tests():
     board = Board()
-    board.get_control_points(constants.WHITE)
+    board.get_focal_points(constants.WHITE)
 
 if __name__ == "__main__":
     # test_minimax()

@@ -1,5 +1,6 @@
 import math
 
+
 class BoardUtils:
     '''
         A method to convert a given square into an index
@@ -15,7 +16,7 @@ class BoardUtils:
         row, col = BoardUtils.square_to_row_col(square)
         # return bitwise index of given square
         return row * BoardConstants.BOARD_LENGTH + col
-    
+
     def square_to_row_col(square):
         row = int(square[1]) - 1
         col = ord(square[0]) - ord('a')
@@ -34,17 +35,18 @@ class BoardUtils:
                 board.append(board_string[(i*8)+(7-j)] + ' ')
             board.append('\n')
         return ''.join(board[::-1][1:])
-    
+
     def singleton_board_to_index(integer_board):
         # verify the board is a power of two (i.e. a singleton board)
         if (integer_board & (integer_board - 1)) > 0 or integer_board == 0:
             return -1
-        return int(round(math.log(integer_board, 2))) # gets the index of the piece
-    
+        # gets the index of the piece
+        return int(round(math.log(integer_board, 2)))
+
     def board_to_indexes(integer_board):
         return [i for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
-            
-            
+
+
 class BoardConstants:
     # numeric constants
     BOARD_LENGTH = 8
@@ -70,9 +72,11 @@ class BoardConstants:
     BLACK_BISHOP = 'b'
     BLACK_QUEEN = 'q'
     BLACK_KING = 'k'
-    
-    ALL_PIECE_TYPES = [WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING]
 
+    WHITE_PIECES = set([WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN])
+    BLACK_PIECES = set([WHITE_KING, BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING])
+    ALL_PIECE_TYPES = WHITE_PIECES.union(BLACK_PIECES)
+                          
     # players
     WHITE = 0
     BLACK = 1
