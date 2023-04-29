@@ -473,10 +473,9 @@ class Board:
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
         score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        #self.get_king_security(all_moves, color)
-        #defense_pot = self.get_defensive_potential(all_moves,color,queen,rook,bishop,knight,pawn)
-        #print("testing defensive pot: " + str(defense_pot))
-        #score_mod += defense_pot
+        king_security = self.get_king_security(color)
+        print("testing king security: " + str(king_security))
+        score_mod += king_security
         
         white_count = bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
@@ -610,6 +609,31 @@ class Board:
                     defensive_potential += knight/20*(defended_mask & self.black_knights).bit_count()
                     defensive_potential += pawn/20*(defended_mask & self.black_pawns).bit_count()
         return defensive_potential
+    
+    '''
+        Measure king security
+    '''
+    def get_king_security(self,color):
+        king_security = 0.0
+        if (color == constants.WHITE):
+            king_security += .50*(self.white_pawns & self.white_immediate_shelter).bit_count() \
+                + .50/2*(self.white_pawns & (self.white_cross_wide_shelter | self.white_diag_wide_shelter)).bit_count() \
+                + .50/3*(self.white_pawns & self.white_sinu_wide_shelter).bit_count()
+            full_shelter = self.white_cross_wide_shelter | self.white_diag_wide_shelter | self.white_immediate_shelter | self.white_sinu_wide_shelter
+            king_security += 0.1*(full_shelter & self.white_queens).bit_count() \
+                + 0.15*(full_shelter & self.white_rooks).bit_count() \
+                + 0.25*(full_shelter & self.white_knights).bit_count() \
+                + 0.30*(full_shelter & self.white_bishops).bit_count()
+        else:
+            king_security += .50*(self.black_pawns & self.black_immediate_shelter).bit_count() \
+                + .50/2*(self.black_pawns & (self.black_cross_wide_shelter | self.black_diag_wide_shelter)).bit_count() \
+                + .50/3*(self.black_pawns & self.black_sinu_wide_shelter).bit_count()
+            full_shelter = self.black_cross_wide_shelter | self.black_diag_wide_shelter | self.black_immediate_shelter | self.black_sinu_wide_shelter
+            king_security += 0.1*(full_shelter & self.black_queens).bit_count() \
+                + 0.15*(full_shelter & self.black_rooks).bit_count() \
+                + 0.25*(full_shelter & self.black_knights).bit_count() \
+                + 0.30*(full_shelter & self.black_bishops).bit_count()
+        return king_security
     
     '''
         Re-gets king shelter positions after the king has been moved
