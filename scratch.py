@@ -41,8 +41,10 @@ def test_misc():
     board.move_piece('f8','f7')
     board.move_piece('h2','h3')
     board.set_piece('q','c4')
+    board.set_piece('Q','b4')
     start = datetime.datetime.now()
     print(utils.bin_to_string(board.get_moves('c4')))
+    print(str(board.get_score(constants.WHITE,False)))
 
 
     end = datetime.datetime.now()
@@ -89,10 +91,17 @@ def get_focal_point():
     print(b)
     print(0x1818 << 8 * 2)
 
+def duplicate_king_glitch():
+    board = Board()
+    board.move_piece('g8','f2')
+    board.move_piece('e1','f2')
+    board.undo_last()
+    print(board.get_board_string())
+
 if __name__ == "__main__":
     # test_minimax()
     
-    # test_misc()
+    # duplicate_king_glitch()
     # print_initial_board()
     # focal_control_tests()
     # development_order_evaluation_test()

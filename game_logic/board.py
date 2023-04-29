@@ -129,7 +129,7 @@ class Board:
         sets a given piece to a given square
 
         PARAMS
-        piece: a character identifying the type of chess piece (e.g. constants.WHITE_KING for white King, constants.WHITE_QUEEN for white Queen, etc.)
+        piece: a character identifying the type of chess piece (e.g. 'K' for white King, 'Q' for white Queen, etc.)
         square: string or integer index identifying the cell on the board needing to be set
     '''
 
@@ -274,6 +274,11 @@ class Board:
         
         self.last_last_moves = self.last_move
         # save latest move
+        # if self.last_moves[:10] == [(), ('P', 'h2', '-', 'h4'), ('n', 'g8', '-', 'h6'), ('P', 'h4', '-', 'h5'), ('n', 'h6', '-', 'g4'), (), (), (), ('N', 'g1', '-', 'h3'), ('n', 'g4', 'P', 'f2')]:
+        #     print(self.get_board_string())
+        #     print(self.last_moves)
+        #     print()
+        self.last_moves.append(self.last_move)
         self.last_move = (from_piece,from_square,to_piece,to_square)
         
 
@@ -297,8 +302,7 @@ class Board:
     '''
     def undo_last(self):
         if len(self.last_move) != 0:
-            self.set_piece(self.last_move[0],self.last_move[1])
-            self.set_piece(self.last_move[2],self.last_move[3])
+            self.move_piece(self.last_move[3],self.last_move[1])
             self.last_move = tuple()
 
 
@@ -309,8 +313,8 @@ class Board:
         an integer mask representing the moves the piece in the given square can take
     '''
 
-    def get_moves(self, square):
-        return self.move_generator.generate_moves(square)
+    def get_moves(self, square, is_swapped = False):
+        return self.move_generator.generate_moves(square, is_swapped)
     
     '''
         determines the given piece's color
@@ -386,20 +390,19 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color, winning_board):
-        # possible moves of the current color are known, now get enemy possible moves
         if (color == constants.WHITE):
             enemy_color = constants.BLACK
         else:
             enemy_color = constants.WHITE
             
+        # get all moves, for use in evaluation functions
         all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
         for i in range (0,64):
             if (self.board & (1<<i)):
                 square = utils.index_to_square(i)
                 moves = self.get_moves(square)
                 piece = self.get_piece(i)
-                all_moves[piece].append((square,moves))
-                
+                all_moves[piece].append((square,moves))     
         
         # 1) Get initial piece scores
         Opening = False
@@ -466,26 +469,160 @@ class Board:
         # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
         score_mod = 0.0 # add to the returned score based on various conditions
         
-        if (winning_board): score_mod += 200.0
+        if (winning_board): score_mod += 200.0   
 
         score_mod += self.get_focal_points(color)
         score_mod += self.get_development_order_points(color)
-
-        # Return score
-        if (color == constants.WHITE):
-            return bishop*self.white_bishops.bit_count() +  \
+        score_mod += self.get_mobility_score(all_moves,color)
+        score_mod += self.get_position_score(color)
+        score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        #defense_pot = self.get_defensive_potential(all_moves,color,queen,rook,bishop,knight,pawn)
+        #print("testing defensive pot: " + str(defense_pot))
+        #score_mod += defense_pot
+        
+        white_count = bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
             rook*self.white_rooks.bit_count() + \
             knight*self.white_knights.bit_count() + \
             queen*self.white_queens.bit_count() + \
-            king*self.white_king.bit_count() + score_mod
-        else:
-            return bishop*self.black_bishops.bit_count() +  \
+            king*self.white_king.bit_count()
+            
+        black_count = bishop*self.black_bishops.bit_count() +  \
             pawn*self.black_pawns.bit_count() + \
             rook*self.black_rooks.bit_count() + \
             knight*self.black_knights.bit_count() + \
             queen*self.black_queens.bit_count() + \
-            king*self.black_king.bit_count() + score_mod
+            king*self.black_king.bit_count()
+        
+        # Return score
+        if (color == constants.WHITE):
+            return white_count - black_count + score_mod
+        else:
+            return black_count - white_count + score_mod
+
+    '''
+        Get the mobility score for a board (applicible in any stage)
+    '''
+    def get_mobility_score(self, all_moves, color):
+        mobility = 0
+        if (color == constants.WHITE):
+            for piece in constants.WHITE_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    mobility += each_piece_move[1].bit_count()
+        else:
+            for piece in constants.BLACK_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    mobility += each_piece_move[1].bit_count()
+        return mobility * 0.10
+    
+    '''
+        Get the position score for a board (applicable at any stage)
+    '''
+    def get_position_score(self,color):
+        score = 0
+        if (color == constants.WHITE):
+            score -= 0.015*((self.white_pieces & 0xff).bit_count()) # first rank
+            score += 0.015*((self.white_pieces & (0xff << 8)).bit_count()) # second rank
+            score += 0.030*((self.white_pieces & (0xff << 8*2)).bit_count()) # third rank
+            score += 0.45*((self.white_pieces & (0xff << 8*3)).bit_count()) # fourth rank
+            score += 0.60*((self.white_pieces & (0xff << 8*4)).bit_count()) # fifth rank
+            score += 0.75*((self.white_pieces & (0xff << 8*5)).bit_count()) # sixth rank
+            score += 0.60*((self.white_pieces & (0xff << 8*6)).bit_count()) # seventh rank
+            score += 0.030*((self.white_pieces & (0xff << 8*7)).bit_count()) # eigth rank           
+        else:
+            score -= 0.015*((self.black_pieces & 0xff << 8*7).bit_count()) # first rank (reverse orientation)
+            score += 0.015*((self.black_pieces & (0xff << 8*6)).bit_count()) # second rank
+            score += 0.030*((self.black_pieces & (0xff << 8*5)).bit_count()) # third rank
+            score += 0.45*((self.black_pieces & (0xff << 8*4)).bit_count()) # fourth rank
+            score += 0.60*((self.black_pieces & (0xff << 8*3)).bit_count()) # fifth rank
+            score += 0.75*((self.black_pieces & (0xff << 8*2)).bit_count()) # sixth rank
+            score += 0.60*((self.black_pieces & (0xff << 8*1)).bit_count()) # seventh rank
+            score += 0.030*((self.black_pieces & 0xff).bit_count()) # eigth rank
+        return score
+    
+    '''
+        Get the attacking potential of a board (applicable in all stages)
+        
+        + 1/10 of all attacked pieces strength
+    '''
+    def get_attacking_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
+        attack_potential = 0
+        if (color == constants.WHITE):
+            for piece in constants.WHITE_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    attack_potential += queen/10*(each_piece_move[1] & self.black_queens).bit_count()
+                    attack_potential += rook/10*(each_piece_move[1] & self.black_rooks).bit_count()
+                    attack_potential += bishop/10*(each_piece_move[1] & self.black_bishops).bit_count()
+                    attack_potential += knight/10*(each_piece_move[1] & self.black_knights).bit_count()
+                    attack_potential += pawn/10*(each_piece_move[1] & self.black_pawns).bit_count()
+        else:
+            for piece in constants.BLACK_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    attack_potential += queen/10*(each_piece_move[1] & self.white_queens).bit_count()
+                    attack_potential += rook/10*(each_piece_move[1] & self.white_rooks).bit_count()
+                    attack_potential += bishop/10*(each_piece_move[1] & self.white_bishops).bit_count()
+                    attack_potential += knight/10*(each_piece_move[1] & self.white_knights).bit_count()
+                    attack_potential += pawn/10*(each_piece_move[1] & self.white_pawns).bit_count()
+        return attack_potential
+    
+                        # if (piece == constants.WHITE_PAWN): # special case: pawns defend diagonals
+                        # index = utils.square_to_index(each_piece_move[0])
+                        # if (index % 8 == 0):
+                        #     defended = 1 << (index + 7)
+                        # elif (index % 8 == 7):
+                        #     defended = 1 << (index + 9)
+                        # else:
+                        #     defended = 1 << (index + 7) | 1 << (index + 9)
+                        # defensive_potential += queen/20*(defended & self.black_queens).bit_count()
+                        # defensive_potential += rook/20*(defended & self.black_rooks).bit_count()
+                        # defensive_potential += bishop/20*(defended & self.black_bishops).bit_count()
+                        # defensive_potential += knight/20*(defended & self.black_knights).bit_count()
+                        # defensive_potential += pawn/20*(defended & self.black_pawns).bit_count()
+    
+    '''
+        Get defensive potential (applicable at all stages) TODO: finish
+        
+        + 1/20 of all defended pieces strength
+    '''
+    def get_defensive_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
+        defensive_potential = 0
+        if (color == constants.WHITE):
+            for piece in constants.WHITE_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    defended_mask = self.get_moves(each_piece_move[0],True)
+                    print(each_piece_move[0] + "\n" + utils.bin_to_string(defended_mask))
+                    defensive_potential += queen/20*(defended_mask & self.white_queens).bit_count()
+                    defensive_potential += rook/20*(defended_mask & self.white_rooks).bit_count()
+                    defensive_potential += bishop/20*(defended_mask & self.white_bishops).bit_count()
+                    defensive_potential += knight/20*(defended_mask & self.white_knights).bit_count()
+                    defensive_potential += pawn/20*(defended_mask & self.white_pawns).bit_count()
+        else:
+            for piece in constants.BLACK_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    defended_mask = self.get_moves(each_piece_move[0],True)
+                    defensive_potential += queen/20*(defended_mask & self.black_queens).bit_count()
+                    defensive_potential += rook/20*(defended_mask & self.black_rooks).bit_count()
+                    defensive_potential += bishop/20*(defended_mask & self.black_bishops).bit_count()
+                    defensive_potential += knight/20*(defended_mask & self.black_knights).bit_count()
+                    defensive_potential += pawn/20*(defended_mask & self.black_pawns).bit_count()
+        return defensive_potential
+    
+    '''
+        Measures King security
+    '''
+    def get_king_security(self, color):
+        pass
+        
+        
+            
+            
+            
 
 
     def get_focal_points(self, color, piece_moves):
