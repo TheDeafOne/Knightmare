@@ -469,6 +469,7 @@ class Board:
         if (winning_board): score_mod += 200.0
 
         score_mod += self.get_focal_points(color)
+        score_mod += self.get_development_order_points(color)
 
         # Return score
         if (color == constants.WHITE):
