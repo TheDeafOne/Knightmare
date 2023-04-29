@@ -588,8 +588,6 @@ class MoveGenerator:
 
         self.board.set_piece(piece, index)
 
-        
-        
         return attacking, line_of_attack
         
 
