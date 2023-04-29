@@ -497,7 +497,10 @@ class Board:
         score_mod += self.get_position_score(color)
         score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
         score_mod += self.get_king_security(color)
+        score_mod += self.get_endgame_points(color)
         
+        score_mod /= 2
+
         white_count = bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
             rook*self.white_rooks.bit_count() + \
@@ -840,7 +843,8 @@ class Board:
                 minor_pieces_developed += 1
 
         if self.last_move[0] == queen and minor_pieces_developed < 2:
-            evaluate_value -= 0.3
+            evaluate_value -= 0.5
+            print('test')
         elif self.last_move[0] == rook and minor_pieces_developed < 2:
             evaluate_value -= 0.5
         if self.last_move[0] == knight:
@@ -849,7 +853,36 @@ class Board:
                 evaluate_value += 0.2
 
         return evaluate_value
+    
+    def get_endgame_points(self, color):
+        evaluate_value = 0
+        point_rank_per_row = [0.75, 0.5, 0.35, 0.25]
+        if color == constants.BLACK:
+            king = self.black_king
+        else:
+            point_rank_per_row = point_rank_per_row[::-1]
+            king = self.white_king
+
+        # king mobility
+        king_index = utils.singleton_board_to_index(king)
+        king_moves = self.get_moves(king_index)
+        
+        evaluate_value += king_moves.bit_count() * 0.15
+
+        for i, row_rank_val in enumerate(point_rank_per_row):
+            row_mask = 60 << 8 * (i + 2)
+            if king & row_mask:
+                evaluate_value += row_rank_val
             
+        return evaluate_value
+
+        
+
+        
+
+        
+
+
 
 
     
