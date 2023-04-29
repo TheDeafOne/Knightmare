@@ -106,7 +106,20 @@ class Board:
         self.black_queens = 0x8 << constants.ACROSS_BOARD
 
         self.last_move = tuple()
-        self.move_generator = MoveGenerator(self)        
+        self.move_generator = MoveGenerator(self)   
+        
+        # setup king shelter positions
+        self.white_immediate_shelter = 0x0000
+        self.white_diag_wide_shelter = 0x0000
+        self.white_cross_wide_shelter = 0x0000
+        self.white_sinu_wide_shelter = 0x0000    
+        self.black_immediate_shelter = 0x0000
+        self.black_diag_wide_shelter = 0x0000
+        self.black_cross_wide_shelter = 0x0000
+        self.black_sinu_wide_shelter = 0x0000   
+        
+        self.get_king_shelter(constants.WHITE)
+        self.get_king_shelter(constants.BLACK)
          
     
     '''
@@ -272,6 +285,11 @@ class Board:
         # save latest move
         self.last_move = (from_piece,from_square,to_piece,to_square)
 
+        if (from_piece == constants.BLACK_KING):
+            self.get_king_shelter(constants.BLACK)
+        elif (from_piece == constants.WHITE_KING):
+            self.get_king_shelter(constants.WHITE)
+            
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
@@ -455,7 +473,7 @@ class Board:
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
         score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        self.get_king_security(all_moves, color)
+        #self.get_king_security(all_moves, color)
         #defense_pot = self.get_defensive_potential(all_moves,color,queen,rook,bishop,knight,pawn)
         #print("testing defensive pot: " + str(defense_pot))
         #score_mod += defense_pot
@@ -594,50 +612,120 @@ class Board:
         return defensive_potential
     
     '''
-        Measures King security based on surrounding pawns and pieces
-        
-        checks immediate shelter zone and wide shelter zone
+        Re-gets king shelter positions after the king has been moved
     '''
-    def get_king_security(self, all_moves, color):
-        immediate_shelter = 0x0000
-        diag_wide_shelter = 0x0000
-        vert_wide_shelter = 0x0000
-        horiz_wide_shelter = 0x0000
-        sinu_wide_shelter = 0x0000
-        
+    def get_king_shelter(self, color):        
         if (color == constants.WHITE):
+            self.white_immediate_shelter = 0x0000
+            self.white_diag_wide_shelter = 0x0000
+            self.white_cross_wide_shelter = 0x0000
+            self.white_sinu_wide_shelter = 0x0000
             if (self.white_king.bit_count() != 1):
-                return 0
+                return
             
             index = utils.singleton_board_to_index(self.white_king)
-            if (index%8>0): # left side is free
-                immediate_shelter |= 1 << (index - 1)
-                if (index > 7): # back left corner and back edge is free
-                    immediate_shelter |= (1 << (index - 8)) | (1 << (index - 9))
-                if (index < 56): # front left corner and front edge is free
-                    immediate_shelter |= (1 << (index + 8)) | (1 << (index + 7))
-            if (index%8<7): # right side is free
-                immediate_shelter |= 1 << (index + 1)
-                if (index > 7): # back right corner is free
-                    immediate_shelter |= 1 << (index - 7)
-                if (index < 56): # front right corner
-                    immediate_shelter |= 1 << (index + 9)
+            if ((index-1)%8<7): 
+                self.white_immediate_shelter |= 1 << (index-1) # left 
+                if ((index-2)%8<7): self.white_cross_wide_shelter |= 1 << (index-2) # two left
+            if ((index+1)%8>0):
+                self.white_immediate_shelter |= 1 << (index+1) # right
+                if ((index+2)%8>0): self.white_cross_wide_shelter |= 1 << (index+2) # two right
+            if ((index-8)>-1): # level below king
+                self.white_immediate_shelter |= 1 << (index-8) # below
+                if ((index-8-1)%8<7):
+                    self.white_immediate_shelter |= 1 << (index-8-1) # bottom left corner
+                    if ((index-8-2)%8<7):
+                        self.white_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
+                if ((index-8+1)%8>0):
+                    self.white_immediate_shelter |= 1 << (index-8+1) # bottom right
+                    if ((index-8+2)%8>0):
+                        self.white_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
+            if ((index-16)>-1): # two levels below king
+                self.white_cross_wide_shelter |= 1 << (index-16) 
+                if ((index-16-1)%8<7): # bottom bottom left
+                    self.white_sinu_wide_shelter |= 1 << (index-16-1)
+                    if ((index-16-2)%8<7): # bottom bottom left left
+                        self.white_diag_wide_shelter |= 1 << (index-16-2)
+                if ((index-16+1)%8>0): # bottom bottom right
+                    self.white_sinu_wide_shelter |= 1 << (index-16+1)
+                    if ((index-16+2)%8>0): # bottom bottom right right
+                        self.white_diag_wide_shelter |= 1 << (index-16+2)
+            if ((index+8)<56): # level above king
+                self.white_immediate_shelter |= 1 << (index+8)
+                if ((index+8-1)%8<7):
+                    self.white_immediate_shelter |= 1 << (index+8-1) # top left corner
+                    if ((index+8-2)%8<7):
+                        self.white_sinu_wide_shelter |= 1 << (index+8-2) # top left left
+                if ((index+8+1)%8>0):
+                    self.white_immediate_shelter |= 1 << (index+8+1) # top right
+                    if ((index+8+2)%8>0):
+                        self.white_sinu_wide_shelter |= 1 << (index+8+2) # top right right
+            if ((index+16)<56): # two levels above king
+                self.white_cross_wide_shelter |= 1 << (index+16) 
+                if ((index+16-1)%8<7): # top top left
+                    self.white_sinu_wide_shelter |= 1 << (index+16-1)
+                    if ((index+16-2)%8<7): # top top left left
+                        self.white_diag_wide_shelter |= 1 << (index+16-2)
+                if ((index+16+1)%8>0): # top top right
+                    self.white_sinu_wide_shelter |= 1 << (index+16+1)
+                    if ((index+16+2)%8>0): # top top right right
+                        self.white_diag_wide_shelter |= 1 << (index+16+2)
         else:
+            self.black_immediate_shelter = 0x0000
+            self.black_diag_wide_shelter = 0x0000
+            self.black_cross_wide_shelter = 0x0000
+            self.black_sinu_wide_shelter = 0x0000
             if (self.black_king.bit_count() != 1):
-                return 0
+                return
+            
             index = utils.singleton_board_to_index(self.black_king)
-            if (index%8>0): # left side is free
-                immediate_shelter |= 1 << (index - 1)
-                if (index < 56): # back left corner and back edge is free
-                    immediate_shelter |= (1 << (index - 8)) | (1 << (index - 9))
-                if (index > 7): # front left corner and front edge is free
-                    immediate_shelter |= (1 << (index + 8)) | (1 << (index + 7))
-            if (index%8<7): # right side is free
-                immediate_shelter |= 1 << (index + 1)
-                if (index < 56): # back right corner is free
-                    immediate_shelter |= 1 << (index - 7)
-                if (index > 7): # front right corner
-                    immediate_shelter |= 1 << (index + 9)
+            if ((index-1)%8<7): 
+                self.black_immediate_shelter |= 1 << (index-1) # left 
+                if ((index-2)%8<7): self.black_cross_wide_shelter |= 1 << (index-2) # two left
+            if ((index+1)%8>0):
+                self.black_immediate_shelter |= 1 << (index+1) # right
+                if ((index+2)%8>0): self.black_cross_wide_shelter |= 1 << (index+2) # two right
+            if ((index-8)>-1): # level below king
+                self.black_immediate_shelter |= 1 << (index-8)
+                if ((index-8-1)%8<7):
+                    self.black_immediate_shelter |= 1 << (index-8-1) # bottom left corner
+                    if ((index-8-2)%8<7):
+                        self.black_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
+                if ((index-8+1)%8>0):
+                    self.black_immediate_shelter |= 1 << (index-8+1) # bottom right
+                    if ((index-8+2)%8>0):
+                        self.black_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
+            if ((index-16)>-1): # two levels below king
+                self.black_cross_wide_shelter |= 1 << (index-16) 
+                if ((index-16-1)%8<7): # bottom bottom left
+                    self.black_sinu_wide_shelter |= 1 << (index-16-1)
+                    if ((index-16-2)%8<7): # bottom bottom left left
+                        self.black_diag_wide_shelter |= 1 << (index-16-2)
+                if ((index-16+1)%8>0): # bottom bottom right
+                    self.black_sinu_wide_shelter |= 1 << (index-16+1)
+                    if ((index-16+2)%8>0): # bottom bottom right right
+                        self.black_diag_wide_shelter |= 1 << (index-16+2)
+            if ((index+8)<56): # level above king
+                self.black_immediate_shelter |= 1 << (index+8)
+                if ((index+8-1)%8<7):
+                    self.black_immediate_shelter |= 1 << (index+8-1) # top left corner
+                    if ((index+8-2)%8<7):
+                        self.black_sinu_wide_shelter |= 1 << (index+8-2) # top left left
+                if ((index+8+1)%8>0):
+                    self.black_immediate_shelter |= 1 << (index+8+1) # top right
+                    if ((index+8+2)%8>0):
+                        self.black_sinu_wide_shelter |= 1 << (index+8+2) # top right right
+            if ((index+16)<56): # two levels above king
+                self.black_cross_wide_shelter |= 1 << (index+16) 
+                if ((index+16-1)%8<7): # top top left
+                    self.black_sinu_wide_shelter |= 1 << (index+16-1)
+                    if ((index+16-2)%8<7): # top top left left
+                        self.black_diag_wide_shelter |= 1 << (index+16-2)
+                if ((index+16+1)%8>0): # top top right
+                    self.black_sinu_wide_shelter |= 1 << (index+16+1)
+                    if ((index+16+2)%8>0): # top top right right
+                        self.black_diag_wide_shelter |= 1 << (index+16+2)
+
             
         
         
