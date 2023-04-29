@@ -44,10 +44,7 @@ class BoardUtils:
     def board_to_indexes(integer_board):
         return [i for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
             
-
-
-
-
+            
 class BoardConstants:
     # numeric constants
     BOARD_LENGTH = 8
