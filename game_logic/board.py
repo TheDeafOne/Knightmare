@@ -472,9 +472,9 @@ class Board:
         if (winning_board): score_mod += 200.0   
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
-        score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        attack_pot = self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
         king_security = self.get_king_security(color)
-        print("testing king security: " + str(king_security))
+        print("testing king attack: " + str(attack_pot))
         score_mod += king_security
         
         white_count = bishop*self.white_bishops.bit_count() +  \
@@ -543,10 +543,15 @@ class Board:
         Get the attacking potential of a board (applicable in all stages)
         
         + 1/10 of all attacked pieces strength
+        + 1/10 for attacking the king
+        + 1/20 for attacking the king's immediate shelter
+        + 1/20 * 2/3 for attacking the king's wide shelter
     '''
     def get_attacking_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
         attack_potential = 0
+        
         if (color == constants.WHITE):
+            wide_shelter = self.black_cross_wide_shelter | self.black_diag_wide_shelter | self.black_sinu_wide_shelter
             for piece in constants.WHITE_PIECES:
                 piece_moves = all_moves[piece]
                 for each_piece_move in piece_moves:
@@ -555,8 +560,30 @@ class Board:
                     attack_potential += bishop/10*(each_piece_move[1] & self.black_bishops).bit_count()
                     attack_potential += knight/10*(each_piece_move[1] & self.black_knights).bit_count()
                     attack_potential += pawn/10*(each_piece_move[1] & self.black_pawns).bit_count()
+                    
+                    if (piece == constants.WHITE_QUEEN):
+                        attack_potential += queen/10*(each_piece_move[1] & self.black_king).bit_count()
+                        attack_potential += queen/20*(each_piece_move[1] & self.black_pieces & self.black_immediate_shelter).bit_count()
+                        attack_potential += queen/20 * 2/3 * (each_piece_move[1] & self.black_pieces & wide_shelter).bit_count()
+                    elif (piece == constants.WHITE_ROOK):
+                        attack_potential += rook/10*(each_piece_move[1] & self.black_king).bit_count()
+                        attack_potential += rook/20*(each_piece_move[1] & self.black_pieces & self.black_immediate_shelter).bit_count()
+                        attack_potential += rook/20 * 2/3 * (each_piece_move[1] & self.black_pieces & wide_shelter).bit_count()
+                    elif (piece == constants.WHITE_BISHOP):
+                        attack_potential += bishop/10*(each_piece_move[1] & self.black_king).bit_count()
+                        attack_potential += bishop/20*(each_piece_move[1] & self.black_pieces & self.black_immediate_shelter).bit_count()
+                        attack_potential += bishop/20 * 2/3 * (each_piece_move[1] & self.black_pieces & wide_shelter).bit_count()
+                    if (piece == constants.WHITE_KNIGHT):
+                        attack_potential += knight/10*(each_piece_move[1] & self.black_king).bit_count()
+                        attack_potential += knight/20*(each_piece_move[1] & self.black_pieces & self.black_immediate_shelter).bit_count()
+                        attack_potential += knight/20 * 2/3 * (each_piece_move[1] & self.black_pieces & wide_shelter).bit_count()
+                    if (piece == constants.WHITE_PAWN):
+                        attack_potential += pawn/10*(each_piece_move[1] & self.black_king).bit_count()
+                        attack_potential += pawn/20*(each_piece_move[1] & self.black_pieces & self.black_immediate_shelter).bit_count()
+                        attack_potential += pawn/20 * 2/3 * (each_piece_move[1] & self.black_pieces & wide_shelter).bit_count()
         else:
             for piece in constants.BLACK_PIECES:
+                wide_shelter = self.white_cross_wide_shelter | self.white_diag_wide_shelter | self.white_sinu_wide_shelter
                 piece_moves = all_moves[piece]
                 for each_piece_move in piece_moves:
                     attack_potential += queen/10*(each_piece_move[1] & self.white_queens).bit_count()
@@ -564,6 +591,27 @@ class Board:
                     attack_potential += bishop/10*(each_piece_move[1] & self.white_bishops).bit_count()
                     attack_potential += knight/10*(each_piece_move[1] & self.white_knights).bit_count()
                     attack_potential += pawn/10*(each_piece_move[1] & self.white_pawns).bit_count()
+                    
+                    if (piece == constants.BLACK_QUEEN):
+                        attack_potential += queen/10*(each_piece_move[1] & self.white_king).bit_count()
+                        attack_potential += queen/20*(each_piece_move[1] & self.white_pieces & self.white_immediate_shelter).bit_count()
+                        attack_potential += queen/20 * 2/3 * (each_piece_move[1] & self.white_pieces & wide_shelter).bit_count()
+                    elif (piece == constants.BLACK_ROOK):
+                        attack_potential += rook/10*(each_piece_move[1] & self.white_king).bit_count()
+                        attack_potential += rook/20*(each_piece_move[1] & self.white_pieces & self.white_immediate_shelter).bit_count()
+                        attack_potential += rook/20 * 2/3 * (each_piece_move[1] & self.white_pieces & wide_shelter).bit_count()
+                    elif (piece == constants.BLACK_BISHOP):
+                        attack_potential += bishop/10*(each_piece_move[1] & self.white_king).bit_count()
+                        attack_potential += bishop/20*(each_piece_move[1] & self.white_pieces & self.white_immediate_shelter).bit_count()
+                        attack_potential += bishop/20 * 2/3 * (each_piece_move[1] & self.white_pieces & wide_shelter).bit_count()
+                    if (piece == constants.BLACK_KNIGHT):
+                        attack_potential += knight/10*(each_piece_move[1] & self.white_king).bit_count()
+                        attack_potential += knight/20*(each_piece_move[1] & self.white_pieces & self.white_immediate_shelter).bit_count()
+                        attack_potential += knight/20 * 2/3 * (each_piece_move[1] & self.white_pieces & wide_shelter).bit_count()
+                    if (piece == constants.BLACK_PAWN):
+                        attack_potential += pawn/10*(each_piece_move[1] & self.white_king).bit_count()
+                        attack_potential += pawn/20*(each_piece_move[1] & self.white_pieces & self.white_immediate_shelter).bit_count()
+                        attack_potential += pawn/20 * 2/3 * (each_piece_move[1] & self.white_pieces & wide_shelter).bit_count()
         return attack_potential
     
                         # if (piece == constants.WHITE_PAWN): # special case: pawns defend diagonals
