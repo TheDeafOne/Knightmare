@@ -57,7 +57,13 @@ def print_initial_board():
 
 def focal_control_tests():
     board = Board()
-    board.get_focal_points(constants.WHITE)
+    board.set_piece('q','d5')
+    board.set_piece('p','e4')
+    board.set_piece('r','d4')
+    # board.set_piece('p','e5')
+    print(board.get_board_string())
+    print(board.get_focal_points(constants.BLACK))
+    
 
 def pawn_to_queen_test():
     board = Board()
@@ -66,10 +72,18 @@ def pawn_to_queen_test():
     board.move_piece('h7','h1')
     print(board.get_board_string())
 
+def development_order_evaluation_test():
+    board = Board()
+    board.move_piece('d8','h3')
+    board.move_piece('b8','a6')
+    board.move_piece('g8','c6')
+    print(board.get_board_string())
+    print(board.get_development_order_points(constants.BLACK, [1,0,0]))
+
 if __name__ == "__main__":
     # test_minimax()
     
     # test_misc()
-    print_initial_board()
-    focal_control_tests()
-    pawn_to_queen_test()
+    # print_initial_board()
+    # focal_control_tests()
+    development_order_evaluation_test()
