@@ -73,6 +73,7 @@ class Board:
             (constants.BOARD_LENGTH - 2)
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
+        self.board_development = self.board
 
         # track en_passant for pawns
         self.en_passant_board = 0
@@ -105,7 +106,8 @@ class Board:
         self.black_king = 0x10 << constants.ACROSS_BOARD
         self.black_queens = 0x8 << constants.ACROSS_BOARD
 
-        self.last_move = tuple()
+        self.last_move = [1,1,1]
+        self.last_last_move = [0,0,0]
         self.move_generator = MoveGenerator(self)        
          
     
@@ -141,6 +143,7 @@ class Board:
         mask = 1 << index
 
         self.board |= mask
+        self.board_development &= ~mask
         # check if piece location corresponds with any of the sub-boards
         # set the cell to be empty
         if piece == constants.EMPTY:
@@ -269,8 +272,10 @@ class Board:
         # clear from cell
         self.set_piece(constants.EMPTY, from_square)
         
+        self.last_last_moves = self.last_move
         # save latest move
         self.last_move = (from_piece,from_square,to_piece,to_square)
+        
 
         # pawn check
         to_index = utils.square_to_index(to_square)
@@ -517,5 +522,45 @@ class Board:
         
         return evaluate_value
     
-    
+    def get_development_order_points(self, color, game_stage):
+        evaluate_value = 0.0
+        if game_stage[0] and self.last_move[0] == self.last_last_move[0]:
+            evaluate_value -= 0.35
+        
+        knight_indexes = constants.WHITE_KNIGHT_INDEXES
+        bishop_indexes = constants.WHITE_BISHOP_INDEXES
+        knight = constants.WHITE_KNIGHT
+        queen = constants.WHITE_QUEEN
+        rook = constants.WHITE_ROOK
+
+        if color == constants.BLACK:
+            knight_indexes = constants.BLACK_KNIGHT_INDEXES
+            bishop_indexes = constants.BLACK_BISHOP_INDEXES
+            knight = constants.BLACK_KNIGHT
+            queen = constants.BLACK_QUEEN
+            rook = constants.BLACK_ROOK
+
+        minor_pieces_developed = 0
+        for index in knight_indexes:
+            if not self.board_development & 1 << index:
+                minor_pieces_developed += 1
+        
+        for index in bishop_indexes:
+            if not self.board_development & 1 << index:
+                minor_pieces_developed += 1
+
+        if self.last_move[0] == queen and minor_pieces_developed < 2:
+            evaluate_value -= 0.3
+        elif self.last_move[0] == rook and minor_pieces_developed < 2:
+            evaluate_value -= 0.5
+        if self.last_move[0] == knight:
+            left_bishop, right_bishop = bishop_indexes
+            if self.board_development & 1 << left_bishop or self.board_development & 1 << right_bishop:
+                evaluate_value += 0.2
+
+        return evaluate_value
+
+            
+
+
     
