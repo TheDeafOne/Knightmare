@@ -372,6 +372,21 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color, winning_board):
+        # possible moves of the current color are known, now get enemy possible moves
+        if (color == constants.WHITE):
+            enemy_color = constants.BLACK
+        else:
+            enemy_color = constants.WHITE
+            
+        all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
+        for i in range (0,64):
+            if (self.board & (1<<i)):
+                square = utils.index_to_square(i)
+                moves = self.get_moves(square)
+                piece = self.get_piece(i)
+                all_moves[piece].append((square,moves))
+                
+        
         # 1) Get initial piece scores
         Opening = False
         Middle = False
