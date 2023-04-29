@@ -99,8 +99,8 @@ class MiniMax():
             return best_val
 
     def get_max(self,board,move,color):
-        board.move_piece(move[0],move[1])
-        score = board.get_score(color)
+        is_winning_board = board.move_piece(move[0],move[1])
+        score = board.get_score(color, is_winning_board)
         board.undo_last()
         return score
 

@@ -59,9 +59,17 @@ def focal_control_tests():
     board = Board()
     board.get_focal_points(constants.WHITE)
 
+def pawn_to_queen_test():
+    board = Board()
+    # board.set_piece(constants.EMPTY, 'h8')
+    # board.set_piece(constants.EMPTY, 'h7')
+    board.move_piece('h7','h1')
+    print(board.get_board_string())
+
 if __name__ == "__main__":
     # test_minimax()
     
     # test_misc()
     print_initial_board()
     focal_control_tests()
+    pawn_to_queen_test()
