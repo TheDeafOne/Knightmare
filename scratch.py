@@ -88,14 +88,9 @@ def development_order_evaluation_test():
 
 
 def get_focal_point():
-    b = 1 << utils.square_to_index('e4')
-    b |= 1 << utils.square_to_index('e5')
-    b |= 1 << utils.square_to_index('d4')
-    b |= 1 << utils.square_to_index('d5')
-    print(utils.bin_to_string(b))
-    print(b)
-    print(0x1818 << 8 * 2)
-
+    board = Board()
+    board.move_piece('a1','c4')
+    print(board.get_score(None,None))
 
 def duplicate_king_glitch():
     board = Board()
@@ -104,12 +99,22 @@ def duplicate_king_glitch():
     board.undo_last()
     print(board.get_board_string())
 
+def testing_enable_moves():
+    board = Board()
+    board.move_piece('b8','d3')
+    # board.move_piece('d1','c2')
+    moves = board.get_moves('d1')
+    board.highlight_moves(moves)
+
+    print(board.get_board_string())
+
 
 if __name__ == "__main__":
-    # # test_minimax()
+    test_minimax()
 
     # duplicate_king_glitch()
     # print_initial_board()
-    focal_control_tests()
+    # focal_control_tests()
     # development_order_evaluation_test()
-    get_focal_point()
+    # get_focal_point()
+    # testing_enable_moves()
