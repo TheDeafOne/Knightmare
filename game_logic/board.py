@@ -488,7 +488,7 @@ class Board:
             king*self.black_king.bit_count() + score_mod
 
 
-    def get_focal_points(self, color):
+    def get_focal_points(self, color, piece_moves):
         pawn_check = constants.WHITE_PAWN
         piece_color_check = constants.WHITE_PIECES
         queen_check = constants.WHITE_QUEEN
@@ -508,17 +508,16 @@ class Board:
             elif piece in piece_color_check:
                 evaluate_value += 0.2
 
-        
-         #TODO: handle focal point control
+        focal_square_mask = 0x1818 << 8 * 2
+        pawn_moves = 0
+        for move_board in [move_board[1] for move_board in piece_moves[pawn_check]]:
+            pawn_moves |= move_board
+        pawn_moves &= focal_square_mask
 
-        # rows = focal_square_controls[1]
-        # evaluate_value = 0.0
-        # for col in focal_square_controls[0]:
-        #     for row in range(rows, rows + 2):
-        #         square = col + str(row)
-        #         piece = self.get_piece(square)
-        #         if piece == pawn_check:
-        #             evaluate_value += 0.4
+        
+
+        
+        
 
         
         return evaluate_value
@@ -560,7 +559,6 @@ class Board:
                 evaluate_value += 0.2
 
         return evaluate_value
-
             
 
 

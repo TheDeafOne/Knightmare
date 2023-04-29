@@ -80,10 +80,20 @@ def development_order_evaluation_test():
     print(board.get_board_string())
     print(board.get_development_order_points(constants.BLACK, [1,0,0]))
 
+def get_focal_point():
+    b = 1 << utils.square_to_index('e4')
+    b |= 1 << utils.square_to_index('e5')
+    b |= 1 << utils.square_to_index('d4')
+    b |= 1 << utils.square_to_index('d5')
+    print(utils.bin_to_string(b))
+    print(b)
+    print(0x1818 << 8 * 2)
+
 if __name__ == "__main__":
     # test_minimax()
     
     # test_misc()
     # print_initial_board()
     # focal_control_tests()
-    development_order_evaluation_test()
+    # development_order_evaluation_test()
+    get_focal_point()
