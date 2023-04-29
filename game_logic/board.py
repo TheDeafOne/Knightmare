@@ -372,20 +372,19 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color, winning_board):
-        # possible moves of the current color are known, now get enemy possible moves
         if (color == constants.WHITE):
             enemy_color = constants.BLACK
         else:
             enemy_color = constants.WHITE
             
+        # get all moves, for use in evaluation functions
         all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
         for i in range (0,64):
             if (self.board & (1<<i)):
                 square = utils.index_to_square(i)
                 moves = self.get_moves(square)
                 piece = self.get_piece(i)
-                all_moves[piece].append((square,moves))
-                
+                all_moves[piece].append((square,moves))     
         
         # 1) Get initial piece scores
         Opening = False
@@ -452,8 +451,12 @@ class Board:
         # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
         score_mod = 0.0 # add to the returned score based on various conditions
         
-        if (winning_board): score_mod += 200.0
-
+        if (winning_board): score_mod += 200.0   
+        score_mod += self.get_mobility_score(all_moves,color) 
+        position_score = self.get_position_score(color)
+        print("TESTING POSITION SCORE: " + str(position_score))
+        score_mod += position_score
+        
         # Return score
         if (color == constants.WHITE):
             return bishop*self.white_bishops.bit_count() +  \
@@ -469,3 +472,48 @@ class Board:
             knight*self.black_knights.bit_count() + \
             queen*self.black_queens.bit_count() + \
             king*self.black_king.bit_count() + score_mod
+
+    '''
+        Get the mobility score for a board (applicible in any stage)
+    '''
+    def get_mobility_score(self, all_moves, color):
+        mobility = 0
+        if (color == constants.WHITE):
+            for piece in constants.WHITE_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    mobility += each_piece_move[1].bit_count()
+        else:
+            for piece in constants.BLACK_PIECES:
+                piece_moves = all_moves[piece]
+                for each_piece_move in piece_moves:
+                    mobility += each_piece_move[1].bit_count()
+        return mobility * 0.10
+    
+    '''
+        Get the position score for a board (applicable at any stage)
+    '''
+    def get_position_score(self,color):
+        score = 0
+        if (color == constants.WHITE):
+            score -= 0.015*((self.white_pieces & 0xff).bit_count()) # first rank
+            score += 0.015*((self.white_pieces & (0xff << 8)).bit_count()) # second rank
+            score += 0.030*((self.white_pieces & (0xff << 8*2)).bit_count()) # third rank
+            score += 0.45*((self.white_pieces & (0xff << 8*3)).bit_count()) # fourth rank
+            score += 0.60*((self.white_pieces & (0xff << 8*4)).bit_count()) # fifth rank
+            score += 0.75*((self.white_pieces & (0xff << 8*5)).bit_count()) # sixth rank
+            score += 0.60*((self.white_pieces & (0xff << 8*6)).bit_count()) # seventh rank
+            score += 0.030*((self.white_pieces & (0xff << 8*7)).bit_count()) # eigth rank           
+        else:
+            score -= 0.015*((self.black_pieces & 0xff << 8*7).bit_count()) # first rank (reverse orientation)
+            score += 0.015*((self.black_pieces & (0xff << 8*6)).bit_count()) # second rank
+            score += 0.030*((self.black_pieces & (0xff << 8*5)).bit_count()) # third rank
+            score += 0.45*((self.black_pieces & (0xff << 8*4)).bit_count()) # fourth rank
+            score += 0.60*((self.black_pieces & (0xff << 8*3)).bit_count()) # fifth rank
+            score += 0.75*((self.black_pieces & (0xff << 8*2)).bit_count()) # sixth rank
+            score += 0.60*((self.black_pieces & (0xff << 8*1)).bit_count()) # seventh rank
+            score += 0.030*((self.black_pieces & 0xff).bit_count()) # eigth rank
+        return score
+            
+            
+            
