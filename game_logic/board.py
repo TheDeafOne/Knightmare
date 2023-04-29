@@ -463,6 +463,8 @@ class Board:
         
         if (winning_board): score_mod += 200.0
 
+        score_mod += self.get_focal_points(color)
+
         # Return score
         if (color == constants.WHITE):
             return bishop*self.white_bishops.bit_count() +  \
@@ -489,8 +491,20 @@ class Board:
             piece_color_check = constants.BLACK_PIECES
             queen_check = constants.BLACK_QUEEN
 
-        #TODO: handle focal point control
+        evaluate_value = 0
+        focal_square = ('e4','d4','e5','d5')
+        for square in focal_square:
+            piece = self.get_piece(square)
+            if piece == pawn_check:
+                evaluate_value += 0.4
+            elif piece == queen_check:
+                evaluate_value += 0.3
+            elif piece in piece_color_check:
+                evaluate_value += 0.2
+
         
+         #TODO: handle focal point control
+
         # rows = focal_square_controls[1]
         # evaluate_value = 0.0
         # for col in focal_square_controls[0]:
@@ -500,15 +514,8 @@ class Board:
         #         if piece == pawn_check:
         #             evaluate_value += 0.4
 
-        evaluate_value = 0
-        focal_square = ('c3','d3','e3','f3')
-        for square in focal_square:
-            piece = self.get_piece(square)
-            if piece == pawn_check:
-                evaluate_value += 0.4
-            elif piece == queen_check:
-                evaluate_value += 0.3
-            elif piece in piece_color_check:
-                evaluate_value += 0.2
         
         return evaluate_value
+    
+    
+    
