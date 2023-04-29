@@ -481,11 +481,16 @@ class Board:
 
 
     def get_focal_points(self, color):
-        focal_square_controls = ('cdef',3)
+        pawn_check = constants.WHITE_PAWN
+        piece_color_check = constants.WHITE_PIECES
+        queen_check = constants.WHITE_QUEEN
         if color == constants.BLACK:
-            focal_square_controls = ('cdef',5)
+            pawn_check = constants.BLACK_PAWN
+            piece_color_check = constants.BLACK_PIECES
+            queen_check = constants.BLACK_QUEEN
 
-        #TODO: handle 
+        #TODO: handle focal point control
+        
         # rows = focal_square_controls[1]
         # evaluate_value = 0.0
         # for col in focal_square_controls[0]:
@@ -495,5 +500,15 @@ class Board:
         #         if piece == pawn_check:
         #             evaluate_value += 0.4
 
+        evaluate_value = 0
         focal_square = ('c3','d3','e3','f3')
-        # for square in focal_square
+        for square in focal_square:
+            piece = self.get_piece(square)
+            if piece == pawn_check:
+                evaluate_value += 0.4
+            elif piece == queen_check:
+                evaluate_value += 0.3
+            elif piece in piece_color_check:
+                evaluate_value += 0.2
+        
+        return evaluate_value
