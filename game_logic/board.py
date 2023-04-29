@@ -143,6 +143,8 @@ class Board:
         if (overall_piece_strength >= 45): # opening
             Middle = True
             Opening = True
+
+            
         elif (overall_piece_strength >= 30): # middle game
             Middle = True
             pawn = pawn * 0.05
@@ -177,8 +179,13 @@ class Board:
         # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
         score_mod = 0.0 # add to the returned score based on various conditions
 
+        focal_square = ('e4','d4','e5','d5')
+        
+
         # Return score
         if (color == constants.WHITE):
+            
+
             return bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
             rook*self.white_rooks.bit_count() + \
@@ -194,8 +201,18 @@ class Board:
             king*self.black_king.bit_count() + score_mod
 
         return 0
-        
-         
+    
+    def get_control_points(self, color):
+        focal_square_controls = ('cdef',3)
+        if color == constants.BLACK:
+            focal_square_controls = ('cdef',5)
+        rows = focal_square_controls[1]
+
+        for col in focal_square_controls[0]:
+            for row in range(rows, rows + 2):
+                square = col + str(row)
+                
+    
     
     '''
         checks whether there is a piece in the given square with the given color

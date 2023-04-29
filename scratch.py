@@ -51,7 +51,17 @@ def test_misc():
     # board.highlight_moves(board.get_moves('e4'))
     print(board.get_board_string())
 
+def print_initial_board():
+    board = Board()
+    print(board.get_board_string())
+
+def focal_control_tests():
+    board = Board()
+    board.get_control_points(constants.WHITE)
+
 if __name__ == "__main__":
-    test_minimax()
+    # test_minimax()
     
     # test_misc()
+    print_initial_board()
+    focal_control_tests()
