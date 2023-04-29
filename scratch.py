@@ -51,7 +51,15 @@ def test_misc():
     # board.highlight_moves(board.get_moves('e4'))
     print(board.get_board_string())
 
+def pawn_to_queen_test():
+    board = Board()
+    # board.set_piece(constants.EMPTY, 'h8')
+    # board.set_piece(constants.EMPTY, 'h7')
+    board.move_piece('h7','h1')
+    print(board.get_board_string())
+
 if __name__ == "__main__":
-    test_minimax()
+    # test_minimax()
     
     # test_misc()
+    pawn_to_queen_test()

@@ -360,6 +360,15 @@ class Board:
         # save latest move
         self.last_move = (from_piece,from_square,to_piece,to_square)
 
+        # pawn check
+        to_index = utils.square_to_index(to_square)
+        from_color = self.get_piece_color(from_piece)
+        if from_piece == constants.WHITE_PAWN or from_piece == constants.BLACK_PAWN:
+            if from_color == self.white_pieces and to_index > 55:
+                self.set_piece(constants.WHITE_QUEEN, to_square)
+            elif to_index < 8:
+                self.set_piece(constants.BLACK_QUEEN, to_square)
+
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
