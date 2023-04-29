@@ -112,6 +112,20 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color):
+        # possible moves of the current color are known, now get enemy possible moves
+        if (color == constants.WHITE):
+            enemy_color = constants.BLACK
+        else:
+            enemy_color = constants.WHITE
+            
+        all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
+        for i in range (0,64):
+            if (self.board & (1<<i)):
+                square = utils.index_to_square(i)
+                moves = self.get_moves(square)
+                piece = self.get_piece(i)
+                all_moves[piece].append((square,moves))
+                
         # 1) Get initial piece scores
         Opening = False
         Middle = False
@@ -176,6 +190,12 @@ class Board:
             
         # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
         score_mod = 0.0 # add to the returned score based on various conditions
+        
+        # universal mobility parameters
+        mobility = 0
+        half_mobility = 0
+        for moves in possible_moves:
+            half_moves = moves
 
         # Return score
         if (color == constants.WHITE):
@@ -193,7 +213,6 @@ class Board:
             queen*self.black_queens.bit_count() + \
             king*self.black_king.bit_count() + score_mod
 
-        return 0
         
          
     
