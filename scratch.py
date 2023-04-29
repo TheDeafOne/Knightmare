@@ -53,7 +53,14 @@ def test_misc():
     # board.highlight_moves(board.get_moves('e4'))
     print(board.get_board_string())
 
+def duplicate_king_glitch():
+    board = Board()
+    board.move_piece('g8','f2')
+    board.move_piece('e1','f2')
+    board.undo_last()
+    print(board.get_board_string())
+
 if __name__ == "__main__":
     test_minimax()
     
-    # test_misc()
+    # duplicate_king_glitch()
