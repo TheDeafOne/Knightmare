@@ -377,7 +377,6 @@ class Board:
         gets the board's evaluation score
     '''
     def get_score(self, color, winning_board):
-        return 0
         if (color == constants.WHITE):
             enemy_color = constants.BLACK
         else:
