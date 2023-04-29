@@ -548,6 +548,20 @@ class Board:
                     attack_potential += pawn/10*(each_piece_move[1] & self.white_pawns).bit_count()
         return attack_potential
     
+                        # if (piece == constants.WHITE_PAWN): # special case: pawns defend diagonals
+                        # index = utils.square_to_index(each_piece_move[0])
+                        # if (index % 8 == 0):
+                        #     defended = 1 << (index + 7)
+                        # elif (index % 8 == 7):
+                        #     defended = 1 << (index + 9)
+                        # else:
+                        #     defended = 1 << (index + 7) | 1 << (index + 9)
+                        # defensive_potential += queen/20*(defended & self.black_queens).bit_count()
+                        # defensive_potential += rook/20*(defended & self.black_rooks).bit_count()
+                        # defensive_potential += bishop/20*(defended & self.black_bishops).bit_count()
+                        # defensive_potential += knight/20*(defended & self.black_knights).bit_count()
+                        # defensive_potential += pawn/20*(defended & self.black_pawns).bit_count()
+    
     '''
         Get defensive potential (applicable at all stages) TODO: finish
         
@@ -577,6 +591,14 @@ class Board:
                     defensive_potential += knight/20*(defended_mask & self.black_knights).bit_count()
                     defensive_potential += pawn/20*(defended_mask & self.black_pawns).bit_count()
         return defensive_potential
+    
+    '''
+        Measures King security
+    '''
+    def get_king_security(self, color):
+        pass
+        
+        
             
             
             

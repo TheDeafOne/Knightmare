@@ -41,8 +41,10 @@ def test_misc():
     board.move_piece('f8','f7')
     board.move_piece('h2','h3')
     board.set_piece('q','c4')
+    board.set_piece('Q','b4')
     start = datetime.datetime.now()
     print(utils.bin_to_string(board.get_moves('c4')))
+    print(str(board.get_score(constants.WHITE,False)))
 
 
     end = datetime.datetime.now()
