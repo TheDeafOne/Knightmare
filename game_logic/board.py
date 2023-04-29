@@ -455,6 +455,7 @@ class Board:
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
         score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        self.get_king_security(all_moves, color)
         #defense_pot = self.get_defensive_potential(all_moves,color,queen,rook,bishop,knight,pawn)
         #print("testing defensive pot: " + str(defense_pot))
         #score_mod += defense_pot
@@ -593,10 +594,54 @@ class Board:
         return defensive_potential
     
     '''
-        Measures King security
+        Measures King security based on surrounding pawns and pieces
+        
+        checks immediate shelter zone and wide shelter zone
     '''
-    def get_king_security(self, color):
-        pass
+    def get_king_security(self, all_moves, color):
+        immediate_shelter = 0x0000
+        diag_wide_shelter = 0x0000
+        vert_wide_shelter = 0x0000
+        horiz_wide_shelter = 0x0000
+        sinu_wide_shelter = 0x0000
+        
+        if (color == constants.WHITE):
+            if (self.white_king.bit_count() != 1):
+                return 0
+            
+            index = utils.singleton_board_to_index(self.white_king)
+            if (index%8>0): # left side is free
+                immediate_shelter |= 1 << (index - 1)
+                if (index > 7): # back left corner and back edge is free
+                    immediate_shelter |= (1 << (index - 8)) | (1 << (index - 9))
+                if (index < 56): # front left corner and front edge is free
+                    immediate_shelter |= (1 << (index + 8)) | (1 << (index + 7))
+            if (index%8<7): # right side is free
+                immediate_shelter |= 1 << (index + 1)
+                if (index > 7): # back right corner is free
+                    immediate_shelter |= 1 << (index - 7)
+                if (index < 56): # front right corner
+                    immediate_shelter |= 1 << (index + 9)
+        else:
+            if (self.black_king.bit_count() != 1):
+                return 0
+            index = utils.singleton_board_to_index(self.black_king)
+            if (index%8>0): # left side is free
+                immediate_shelter |= 1 << (index - 1)
+                if (index < 56): # back left corner and back edge is free
+                    immediate_shelter |= (1 << (index - 8)) | (1 << (index - 9))
+                if (index > 7): # front left corner and front edge is free
+                    immediate_shelter |= (1 << (index + 8)) | (1 << (index + 7))
+            if (index%8<7): # right side is free
+                immediate_shelter |= 1 << (index + 1)
+                if (index < 56): # back right corner is free
+                    immediate_shelter |= 1 << (index - 7)
+                if (index > 7): # front right corner
+                    immediate_shelter |= 1 << (index + 9)
+            
+        
+        
+
         
         
             

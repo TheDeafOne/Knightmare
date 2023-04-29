@@ -43,8 +43,9 @@ def test_misc():
     board.set_piece('q','c4')
     board.set_piece('Q','b4')
     start = datetime.datetime.now()
-    print(utils.bin_to_string(board.get_moves('c4')))
-    print(str(board.get_score(constants.WHITE,False)))
+    # print(utils.bin_to_string(board.get_moves('c4')))
+    print(board.get_board_string())
+    print(str(board.get_score(constants.BLACK,False)))
 
 
     end = datetime.datetime.now()
@@ -54,6 +55,6 @@ def test_misc():
     print(board.get_board_string())
 
 if __name__ == "__main__":
-    test_minimax()
+    # test_minimax()
     
-    # test_misc()
+    test_misc()
