@@ -131,8 +131,10 @@ class MoveGenerator:
         # 0 is attacking piece, 1 is the line of attack
         is_king_in_check = self._in_check(king_index, king_index)
         
+        
         if is_king_in_check[0]:
-            move_board &= is_king_in_check[0]    
+            move_board &= is_king_in_check[1] & (is_king_in_check[0] | self.board.get_moves(utils.singleton_board_to_index(is_king_in_check[0])))
+            
         else:
             is_piece_pinned = self._is_pinned(index)
             if is_piece_pinned[1]:
