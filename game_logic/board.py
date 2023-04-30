@@ -1,5 +1,6 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
 from .move_generator import MoveGenerator
+from algorithms.evaluations import Evaluations
 
 
 class Board:
@@ -109,7 +110,8 @@ class Board:
         self.last_move = [1,1,1]
         self.last_last_move = [0,0,0]
         self.last_moves = []
-        self.move_generator = MoveGenerator(self)   
+        self.move_generator = MoveGenerator(self)  
+        self.evaluations = Evaluations(self) 
         
         # setup king shelter positions
         self.white_immediate_shelter = 0x0000
@@ -121,8 +123,8 @@ class Board:
         self.black_cross_wide_shelter = 0x0000
         self.black_sinu_wide_shelter = 0x0000   
         
-        self.get_king_shelter(constants.WHITE)
-        self.get_king_shelter(constants.BLACK)
+        self.evaluations.get_king_shelter(constants.WHITE)
+        self.evaluations.get_king_shelter(constants.BLACK)
 
         self.num_moves = 0
          
@@ -495,13 +497,13 @@ class Board:
         
         if (winning_board): score_mod += 200.0   
         if opening:
-            score_mod += self.get_focal_points(color, all_moves)
-            score_mod += self.get_development_order_points(color)
-        score_mod += self.get_mobility_score(all_moves,color)
-        score_mod += self.get_position_score(color)
-        score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        score_mod += self.get_king_security(color)
-        score_mod += self.get_endgame_points(color)
+            score_mod += self.evaluations.get_focal_points(color, all_moves)
+            score_mod += self.evaluations.get_development_order_points(color)
+        score_mod += self.evaluations.get_mobility_score(all_moves,color)
+        score_mod += self.evaluations.get_position_score(color)
+        score_mod += self.evaluations.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        score_mod += self.evaluations.get_king_security(color)
+        score_mod += self.evaluations.get_endgame_points(color)
         
         score_mod /= 2
 
@@ -524,359 +526,6 @@ class Board:
             return white_count - black_count + score_mod
         else:
             return black_count - white_count + score_mod
-
-    '''
-        Get the mobility score for a board (applicible in any stage)
-    '''
-    def get_mobility_score(self, all_moves, color):
-        mobility = 0
-        if (color == constants.WHITE):
-            for piece in constants.WHITE_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    mobility += each_piece_move[1].bit_count()
-        else:
-            for piece in constants.BLACK_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    mobility += each_piece_move[1].bit_count()
-        return mobility * 0.10
-    
-    '''
-        Get the position score for a board (applicable at any stage)
-    '''
-    def get_position_score(self,color):
-        score = 0
-        if (color == constants.WHITE):
-            score -= 0.015*((self.white_pieces & 0xff).bit_count()) # first rank
-            score += 0.015*((self.white_pieces & (0xff << 8)).bit_count()) # second rank
-            score += 0.030*((self.white_pieces & (0xff << 8*2)).bit_count()) # third rank
-            score += 0.45*((self.white_pieces & (0xff << 8*3)).bit_count()) # fourth rank
-            score += 0.60*((self.white_pieces & (0xff << 8*4)).bit_count()) # fifth rank
-            score += 0.75*((self.white_pieces & (0xff << 8*5)).bit_count()) # sixth rank
-            score += 0.60*((self.white_pieces & (0xff << 8*6)).bit_count()) # seventh rank
-            score += 0.030*((self.white_pieces & (0xff << 8*7)).bit_count()) # eigth rank           
-        else:
-            score -= 0.015*((self.black_pieces & 0xff << 8*7).bit_count()) # first rank (reverse orientation)
-            score += 0.015*((self.black_pieces & (0xff << 8*6)).bit_count()) # second rank
-            score += 0.030*((self.black_pieces & (0xff << 8*5)).bit_count()) # third rank
-            score += 0.45*((self.black_pieces & (0xff << 8*4)).bit_count()) # fourth rank
-            score += 0.60*((self.black_pieces & (0xff << 8*3)).bit_count()) # fifth rank
-            score += 0.75*((self.black_pieces & (0xff << 8*2)).bit_count()) # sixth rank
-            score += 0.60*((self.black_pieces & (0xff << 8*1)).bit_count()) # seventh rank
-            score += 0.030*((self.black_pieces & 0xff).bit_count()) # eigth rank
-        return score
-    
-    '''
-        Get the attacking potential of a board (applicable in all stages)
-        
-        + 1/10 of all attacked pieces strength
-    '''
-    def get_attacking_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
-        attack_potential = 0
-        if (color == constants.WHITE):
-            for piece in constants.WHITE_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    attack_potential += queen/10*(each_piece_move[1] & self.black_queens).bit_count()
-                    attack_potential += rook/10*(each_piece_move[1] & self.black_rooks).bit_count()
-                    attack_potential += bishop/10*(each_piece_move[1] & self.black_bishops).bit_count()
-                    attack_potential += knight/10*(each_piece_move[1] & self.black_knights).bit_count()
-                    attack_potential += pawn/10*(each_piece_move[1] & self.black_pawns).bit_count()
-        else:
-            for piece in constants.BLACK_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    attack_potential += queen/10*(each_piece_move[1] & self.white_queens).bit_count()
-                    attack_potential += rook/10*(each_piece_move[1] & self.white_rooks).bit_count()
-                    attack_potential += bishop/10*(each_piece_move[1] & self.white_bishops).bit_count()
-                    attack_potential += knight/10*(each_piece_move[1] & self.white_knights).bit_count()
-                    attack_potential += pawn/10*(each_piece_move[1] & self.white_pawns).bit_count()
-        return attack_potential
-    
-                        # if (piece == constants.WHITE_PAWN): # special case: pawns defend diagonals
-                        # index = utils.square_to_index(each_piece_move[0])
-                        # if (index % 8 == 0):
-                        #     defended = 1 << (index + 7)
-                        # elif (index % 8 == 7):
-                        #     defended = 1 << (index + 9)
-                        # else:
-                        #     defended = 1 << (index + 7) | 1 << (index + 9)
-                        # defensive_potential += queen/20*(defended & self.black_queens).bit_count()
-                        # defensive_potential += rook/20*(defended & self.black_rooks).bit_count()
-                        # defensive_potential += bishop/20*(defended & self.black_bishops).bit_count()
-                        # defensive_potential += knight/20*(defended & self.black_knights).bit_count()
-                        # defensive_potential += pawn/20*(defended & self.black_pawns).bit_count()
-    
-    '''
-        Get defensive potential (applicable at all stages) TODO: finish
-        
-        + 1/20 of all defended pieces strength
-    '''
-    def get_defensive_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
-        defensive_potential = 0
-        if (color == constants.WHITE):
-            for piece in constants.WHITE_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    defended_mask = self.get_moves(each_piece_move[0],True)
-                    print(each_piece_move[0] + "\n" + utils.bin_to_string(defended_mask))
-                    defensive_potential += queen/20*(defended_mask & self.white_queens).bit_count()
-                    defensive_potential += rook/20*(defended_mask & self.white_rooks).bit_count()
-                    defensive_potential += bishop/20*(defended_mask & self.white_bishops).bit_count()
-                    defensive_potential += knight/20*(defended_mask & self.white_knights).bit_count()
-                    defensive_potential += pawn/20*(defended_mask & self.white_pawns).bit_count()
-        else:
-            for piece in constants.BLACK_PIECES:
-                piece_moves = all_moves[piece]
-                for each_piece_move in piece_moves:
-                    defended_mask = self.get_moves(each_piece_move[0],True)
-                    defensive_potential += queen/20*(defended_mask & self.black_queens).bit_count()
-                    defensive_potential += rook/20*(defended_mask & self.black_rooks).bit_count()
-                    defensive_potential += bishop/20*(defended_mask & self.black_bishops).bit_count()
-                    defensive_potential += knight/20*(defended_mask & self.black_knights).bit_count()
-                    defensive_potential += pawn/20*(defended_mask & self.black_pawns).bit_count()
-        return defensive_potential
-    
-    '''
-        Measure king security
-    '''
-    def get_king_security(self,color):
-        king_security = 0.0
-        if (color == constants.WHITE):
-            king_security += .50*(self.white_pawns & self.white_immediate_shelter).bit_count() \
-                + .50/2*(self.white_pawns & (self.white_cross_wide_shelter | self.white_diag_wide_shelter)).bit_count() \
-                + .50/3*(self.white_pawns & self.white_sinu_wide_shelter).bit_count()
-            full_shelter = self.white_cross_wide_shelter | self.white_diag_wide_shelter | self.white_immediate_shelter | self.white_sinu_wide_shelter
-            king_security += 0.1*(full_shelter & self.white_queens).bit_count() \
-                + 0.15*(full_shelter & self.white_rooks).bit_count() \
-                + 0.25*(full_shelter & self.white_knights).bit_count() \
-                + 0.30*(full_shelter & self.white_bishops).bit_count()
-        else:
-            king_security += .50*(self.black_pawns & self.black_immediate_shelter).bit_count() \
-                + .50/2*(self.black_pawns & (self.black_cross_wide_shelter | self.black_diag_wide_shelter)).bit_count() \
-                + .50/3*(self.black_pawns & self.black_sinu_wide_shelter).bit_count()
-            full_shelter = self.black_cross_wide_shelter | self.black_diag_wide_shelter | self.black_immediate_shelter | self.black_sinu_wide_shelter
-            king_security += 0.1*(full_shelter & self.black_queens).bit_count() \
-                + 0.15*(full_shelter & self.black_rooks).bit_count() \
-                + 0.25*(full_shelter & self.black_knights).bit_count() \
-                + 0.30*(full_shelter & self.black_bishops).bit_count()
-        return king_security
-    
-    '''
-        Re-gets king shelter positions after the king has been moved
-    '''
-    def get_king_shelter(self, color):        
-        if (color == constants.WHITE):
-            self.white_immediate_shelter = 0x0000
-            self.white_diag_wide_shelter = 0x0000
-            self.white_cross_wide_shelter = 0x0000
-            self.white_sinu_wide_shelter = 0x0000
-            if (self.white_king.bit_count() != 1):
-                return
-            
-            index = utils.singleton_board_to_index(self.white_king)
-            if ((index-1)%8<7): 
-                self.white_immediate_shelter |= 1 << (index-1) # left 
-                if ((index-2)%8<7): self.white_cross_wide_shelter |= 1 << (index-2) # two left
-            if ((index+1)%8>0):
-                self.white_immediate_shelter |= 1 << (index+1) # right
-                if ((index+2)%8>0): self.white_cross_wide_shelter |= 1 << (index+2) # two right
-            if ((index-8)>-1): # level below king
-                self.white_immediate_shelter |= 1 << (index-8) # below
-                if ((index-8-1)%8<7):
-                    self.white_immediate_shelter |= 1 << (index-8-1) # bottom left corner
-                    if ((index-8-2)%8<7):
-                        self.white_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
-                if ((index-8+1)%8>0):
-                    self.white_immediate_shelter |= 1 << (index-8+1) # bottom right
-                    if ((index-8+2)%8>0):
-                        self.white_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
-            if ((index-16)>-1): # two levels below king
-                self.white_cross_wide_shelter |= 1 << (index-16) 
-                if ((index-16-1)%8<7): # bottom bottom left
-                    self.white_sinu_wide_shelter |= 1 << (index-16-1)
-                    if ((index-16-2)%8<7): # bottom bottom left left
-                        self.white_diag_wide_shelter |= 1 << (index-16-2)
-                if ((index-16+1)%8>0): # bottom bottom right
-                    self.white_sinu_wide_shelter |= 1 << (index-16+1)
-                    if ((index-16+2)%8>0): # bottom bottom right right
-                        self.white_diag_wide_shelter |= 1 << (index-16+2)
-            if ((index+8)<56): # level above king
-                self.white_immediate_shelter |= 1 << (index+8)
-                if ((index+8-1)%8<7):
-                    self.white_immediate_shelter |= 1 << (index+8-1) # top left corner
-                    if ((index+8-2)%8<7):
-                        self.white_sinu_wide_shelter |= 1 << (index+8-2) # top left left
-                if ((index+8+1)%8>0):
-                    self.white_immediate_shelter |= 1 << (index+8+1) # top right
-                    if ((index+8+2)%8>0):
-                        self.white_sinu_wide_shelter |= 1 << (index+8+2) # top right right
-            if ((index+16)<56): # two levels above king
-                self.white_cross_wide_shelter |= 1 << (index+16) 
-                if ((index+16-1)%8<7): # top top left
-                    self.white_sinu_wide_shelter |= 1 << (index+16-1)
-                    if ((index+16-2)%8<7): # top top left left
-                        self.white_diag_wide_shelter |= 1 << (index+16-2)
-                if ((index+16+1)%8>0): # top top right
-                    self.white_sinu_wide_shelter |= 1 << (index+16+1)
-                    if ((index+16+2)%8>0): # top top right right
-                        self.white_diag_wide_shelter |= 1 << (index+16+2)
-        else:
-            self.black_immediate_shelter = 0x0000
-            self.black_diag_wide_shelter = 0x0000
-            self.black_cross_wide_shelter = 0x0000
-            self.black_sinu_wide_shelter = 0x0000
-            if (self.black_king.bit_count() != 1):
-                return
-            
-            index = utils.singleton_board_to_index(self.black_king)
-            if ((index-1)%8<7): 
-                self.black_immediate_shelter |= 1 << (index-1) # left 
-                if ((index-2)%8<7): self.black_cross_wide_shelter |= 1 << (index-2) # two left
-            if ((index+1)%8>0):
-                self.black_immediate_shelter |= 1 << (index+1) # right
-                if ((index+2)%8>0): self.black_cross_wide_shelter |= 1 << (index+2) # two right
-            if ((index-8)>-1): # level below king
-                self.black_immediate_shelter |= 1 << (index-8)
-                if ((index-8-1)%8<7):
-                    self.black_immediate_shelter |= 1 << (index-8-1) # bottom left corner
-                    if ((index-8-2)%8<7):
-                        self.black_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
-                if ((index-8+1)%8>0):
-                    self.black_immediate_shelter |= 1 << (index-8+1) # bottom right
-                    if ((index-8+2)%8>0):
-                        self.black_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
-            if ((index-16)>-1): # two levels below king
-                self.black_cross_wide_shelter |= 1 << (index-16) 
-                if ((index-16-1)%8<7): # bottom bottom left
-                    self.black_sinu_wide_shelter |= 1 << (index-16-1)
-                    if ((index-16-2)%8<7): # bottom bottom left left
-                        self.black_diag_wide_shelter |= 1 << (index-16-2)
-                if ((index-16+1)%8>0): # bottom bottom right
-                    self.black_sinu_wide_shelter |= 1 << (index-16+1)
-                    if ((index-16+2)%8>0): # bottom bottom right right
-                        self.black_diag_wide_shelter |= 1 << (index-16+2)
-            if ((index+8)<56): # level above king
-                self.black_immediate_shelter |= 1 << (index+8)
-                if ((index+8-1)%8<7):
-                    self.black_immediate_shelter |= 1 << (index+8-1) # top left corner
-                    if ((index+8-2)%8<7):
-                        self.black_sinu_wide_shelter |= 1 << (index+8-2) # top left left
-                if ((index+8+1)%8>0):
-                    self.black_immediate_shelter |= 1 << (index+8+1) # top right
-                    if ((index+8+2)%8>0):
-                        self.black_sinu_wide_shelter |= 1 << (index+8+2) # top right right
-            if ((index+16)<56): # two levels above king
-                self.black_cross_wide_shelter |= 1 << (index+16) 
-                if ((index+16-1)%8<7): # top top left
-                    self.black_sinu_wide_shelter |= 1 << (index+16-1)
-                    if ((index+16-2)%8<7): # top top left left
-                        self.black_diag_wide_shelter |= 1 << (index+16-2)
-                if ((index+16+1)%8>0): # top top right
-                    self.black_sinu_wide_shelter |= 1 << (index+16+1)
-                    if ((index+16+2)%8>0): # top top right right
-                        self.black_diag_wide_shelter |= 1 << (index+16+2)
-
-            
-        
-
-
-    def get_focal_points(self, color, piece_moves):
-        pawn_check = constants.WHITE_PAWN
-        piece_color_check = constants.WHITE_PIECES
-        queen_check = constants.WHITE_QUEEN
-        player = self.white_pieces
-        if color == constants.BLACK:
-            pawn_check = constants.BLACK_PAWN
-            piece_color_check = constants.BLACK_PIECES
-            queen_check = constants.BLACK_QUEEN
-            player = self.black_pieces
-
-        evaluate_value = 0
-        focal_square = ('e4','d4','e5','d5')
-        for square in focal_square:
-            piece = self.get_piece(square)
-            if piece == pawn_check:
-                evaluate_value += 0.4
-            elif piece == queen_check:
-                evaluate_value += 0.3
-            elif piece in piece_color_check:
-                evaluate_value += 0.2
-
-        focal_square_mask = 0x1818 << 8 * 3
-        wider_focal_square_mask = 0x3c24243c00 << 8
-        inner_moves = 0
-        for piece_type in piece_color_check:
-            for move_board in [move_board[1] for move_board in piece_moves[piece_type]]:
-                inner_moves |= move_board
-        inner_moves &= focal_square_mask
-        evaluate_value += inner_moves.bit_count() * 0.1
-        wider_focal_square_mask &= player
-        evaluate_value += wider_focal_square_mask.bit_count() * 0.1
-
-        return evaluate_value
-
-
-    
-    def get_development_order_points(self, color):
-        evaluate_value = 0.0
-        if self.last_move[0] == self.last_last_move[0]:
-            evaluate_value -= 0.35
-        
-        knight_indexes = constants.WHITE_KNIGHT_INDEXES
-        bishop_indexes = constants.WHITE_BISHOP_INDEXES
-        knight = constants.WHITE_KNIGHT
-        queen = constants.WHITE_QUEEN
-        rook = constants.WHITE_ROOK
-
-        if color == constants.BLACK:
-            knight_indexes = constants.BLACK_KNIGHT_INDEXES
-            bishop_indexes = constants.BLACK_BISHOP_INDEXES
-            knight = constants.BLACK_KNIGHT
-            queen = constants.BLACK_QUEEN
-            rook = constants.BLACK_ROOK
-
-        minor_pieces_developed = 0
-        for index in knight_indexes:
-            if not self.board_development & 1 << index:
-                minor_pieces_developed += 1
-
-        for index in bishop_indexes:
-            if not self.board_development & 1 << index:
-                minor_pieces_developed += 1
-        if self.last_move[0] == queen and minor_pieces_developed < 2:
-            evaluate_value -= 0.5
-        elif self.last_move[0] == rook and minor_pieces_developed < 2:
-            evaluate_value -= 0.5
-        if self.last_move[0] == knight:
-            left_bishop, right_bishop = bishop_indexes
-            if self.board_development & 1 << left_bishop or self.board_development & 1 << right_bishop:
-                evaluate_value += 0.2
-
-        return evaluate_value
-    
-    def get_endgame_points(self, color):
-        evaluate_value = 0
-        point_rank_per_row = [0.75, 0.5, 0.35, 0.25]
-        if color == constants.BLACK:
-            king = self.black_king
-        else:
-            point_rank_per_row = point_rank_per_row[::-1]
-            king = self.white_king
-
-        # king mobility
-        king_index = utils.singleton_board_to_index(king)
-        king_moves = self.get_moves(king_index)
-        
-        evaluate_value += king_moves.bit_count() * 0.15
-
-        for i, row_rank_val in enumerate(point_rank_per_row):
-            row_mask = 60 << 8 * (i + 2)
-            if king & row_mask:
-                evaluate_value += row_rank_val
-            
-        return evaluate_value
 
         
 
