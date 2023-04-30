@@ -173,6 +173,7 @@ class Chess:
                     if move:
                                     
                         is_mate = self.board.move_piece(move[0], move[1])
+                        self.draw_game()
                         print(self.board.get_piece(move[1]),move[0],move[1])
                         if is_mate:
                             self.game_state = "over"
