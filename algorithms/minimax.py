@@ -2,10 +2,11 @@ from game_logic.board import Board
 from game_logic.board_utils import BoardUtils as utils, BoardConstants as constants
 import math
 import copy
+import datetime
 
 class MiniMax():
     def __init__(self):
-        self.MAX_DEPTH = 4 # ply depth is MAX_DEPTH + 1
+        self.MAX_DEPTH = 2 # ply depth is MAX_DEPTH + 1
         self.next_move = tuple()
 
     '''
@@ -108,8 +109,10 @@ class MiniMax():
             return best_val
 
     def get_max(self,board,color,is_terminal_board):
-        return 0
+        # start = datetime.datetime.now()
         score = board.get_score(color, is_terminal_board)
+        # end = datetime.datetime.now()
+        # print((end-start).total_seconds())
         return score
 
     def get_min(self,board,color,is_terminal_board):

@@ -73,6 +73,7 @@ class Board:
             (constants.BOARD_LENGTH - 2)
         self.white_pieces = 0xffff
         self.board = self.black_pieces | self.white_pieces
+        self.board_development = self.board
 
         # track en_passant for pawns
         self.en_passant_board = 0
@@ -105,7 +106,9 @@ class Board:
         self.black_king = 0x10 << constants.ACROSS_BOARD
         self.black_queens = 0x8 << constants.ACROSS_BOARD
 
-        self.last_move = tuple()
+        self.last_move = [1,1,1]
+        self.last_last_move = [0,0,0]
+        self.last_moves = []
         self.move_generator = MoveGenerator(self)   
         
         # setup king shelter positions
@@ -120,6 +123,8 @@ class Board:
         
         self.get_king_shelter(constants.WHITE)
         self.get_king_shelter(constants.BLACK)
+
+        self.num_moves = 0
          
     
     '''
@@ -140,7 +145,7 @@ class Board:
         sets a given piece to a given square
 
         PARAMS
-        piece: a character identifying the type of chess piece (e.g. constants.WHITE_KING for white King, constants.WHITE_QUEEN for white Queen, etc.)
+        piece: a character identifying the type of chess piece (e.g. 'K' for white King, 'Q' for white Queen, etc.)
         square: string or integer index identifying the cell on the board needing to be set
     '''
 
@@ -154,6 +159,7 @@ class Board:
         mask = 1 << index
 
         self.board |= mask
+        self.board_development &= ~mask
         # check if piece location corresponds with any of the sub-boards
         # set the cell to be empty
         if piece == constants.EMPTY:
@@ -269,6 +275,8 @@ class Board:
     '''
 
     def move_piece(self, from_square, to_square):
+        if self.num_moves >= 200:
+            return 2
         # get pieces
         to_piece = self.get_piece(to_square)
         from_piece = self.get_piece(from_square)
@@ -282,18 +290,35 @@ class Board:
         # clear from cell
         self.set_piece(constants.EMPTY, from_square)
         
+        self.last_last_moves = self.last_move
         # save latest move
+        # if self.last_moves[:10] == [(), ('P', 'h2', '-', 'h4'), ('n', 'g8', '-', 'h6'), ('P', 'h4', '-', 'h5'), ('n', 'h6', '-', 'g4'), (), (), (), ('N', 'g1', '-', 'h3'), ('n', 'g4', 'P', 'f2')]:
+        #     print(self.get_board_string())
+        #     print(self.last_moves)
+        #     print()
+        # self.last_moves.append(self.last_move)
+        self.last_moves.append(self.last_move)
         self.last_move = (from_piece,from_square,to_piece,to_square)
+        
+
+        # pawn check
+        to_index = utils.square_to_index(to_square)
+        from_color = self.get_piece_color(from_piece)
+        if from_piece == constants.WHITE_PAWN or from_piece == constants.BLACK_PAWN:
+            if from_color == self.white_pieces and to_index > 55:
+                self.set_piece(constants.WHITE_QUEEN, to_square)
+            elif to_index < 8:
+                self.set_piece(constants.BLACK_QUEEN, to_square)
 
         if (from_piece == constants.BLACK_KING):
             self.get_king_shelter(constants.BLACK)
         elif (from_piece == constants.WHITE_KING):
             self.get_king_shelter(constants.WHITE)
-            
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
-        return self.move_generator._in_mate(king)
+        v = int(self.move_generator._in_mate(king))
+        return v
 
     '''
         undo the last move made
@@ -301,8 +326,7 @@ class Board:
     '''
     def undo_last(self):
         if len(self.last_move) != 0:
-            self.set_piece(self.last_move[0],self.last_move[1])
-            self.set_piece(self.last_move[2],self.last_move[3])
+            self.move_piece(self.last_move[3],self.last_move[1])
             self.last_move = tuple()
 
 
@@ -394,7 +418,7 @@ class Board:
             enemy_color = constants.BLACK
         else:
             enemy_color = constants.WHITE
-            
+        board_development = self.board_development
         # get all moves, for use in evaluation functions
         all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
         for i in range (0,64):
@@ -403,11 +427,11 @@ class Board:
                 moves = self.get_moves(square)
                 piece = self.get_piece(i)
                 all_moves[piece].append((square,moves))     
-        
+        self.board_development = board_development
         # 1) Get initial piece scores
-        Opening = False
-        Middle = False
-        Endgame = False
+        opening = False
+        middle = False
+        endgame = False
         
         queen = 9.0
         rook = 4.5
@@ -433,16 +457,16 @@ class Board:
             king*self.black_king.bit_count()
         
         if (overall_piece_strength >= 45): # opening
-            Middle = True
-            Opening = True
+            middle = True
+            opening = True
         elif (overall_piece_strength >= 30): # middle game
-            Middle = True
+            middle = True
             pawn = pawn * 0.05
         elif (overall_piece_strength >= 15): # Early endgame
-            Endgame = True
+            endgame = True
             pawn = pawn * 1.10
         else:  # late endgame
-            Endgame = True
+            endgame = True
             pawn = pawn * 1.15
         
         if (pawn_count >= 13): # closed positions
@@ -470,13 +494,17 @@ class Board:
         score_mod = 0.0 # add to the returned score based on various conditions
         
         if (winning_board): score_mod += 200.0   
+        if opening:
+            score_mod += self.get_focal_points(color, all_moves)
+            score_mod += self.get_development_order_points(color)
         score_mod += self.get_mobility_score(all_moves,color)
         score_mod += self.get_position_score(color)
-        attack_pot = self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        king_security = self.get_king_security(color)
-        print("testing king attack: " + str(attack_pot))
-        score_mod += king_security
+        score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        score_mod += self.get_king_security(color)
+        score_mod += self.get_endgame_points(color)
         
+        score_mod /= 2
+
         white_count = bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \
             rook*self.white_rooks.bit_count() + \
@@ -800,10 +828,111 @@ class Board:
 
             
         
+
+
+    def get_focal_points(self, color, piece_moves):
+        pawn_check = constants.WHITE_PAWN
+        piece_color_check = constants.WHITE_PIECES
+        queen_check = constants.WHITE_QUEEN
+        player = self.white_pieces
+        if color == constants.BLACK:
+            pawn_check = constants.BLACK_PAWN
+            piece_color_check = constants.BLACK_PIECES
+            queen_check = constants.BLACK_QUEEN
+            player = self.black_pieces
+
+        evaluate_value = 0
+        focal_square = ('e4','d4','e5','d5')
+        for square in focal_square:
+            piece = self.get_piece(square)
+            if piece == pawn_check:
+                evaluate_value += 0.4
+            elif piece == queen_check:
+                evaluate_value += 0.3
+            elif piece in piece_color_check:
+                evaluate_value += 0.2
+
+        focal_square_mask = 0x1818 << 8 * 3
+        wider_focal_square_mask = 0x3c24243c00 << 8
+        inner_moves = 0
+        for piece_type in piece_color_check:
+            for move_board in [move_board[1] for move_board in piece_moves[piece_type]]:
+                inner_moves |= move_board
+        inner_moves &= focal_square_mask
+        evaluate_value += inner_moves.bit_count() * 0.1
+        wider_focal_square_mask &= player
+        evaluate_value += wider_focal_square_mask.bit_count() * 0.1
+
+        return evaluate_value
+
+
+    
+    def get_development_order_points(self, color):
+        evaluate_value = 0.0
+        if self.last_move[0] == self.last_last_move[0]:
+            evaluate_value -= 0.35
+        
+        knight_indexes = constants.WHITE_KNIGHT_INDEXES
+        bishop_indexes = constants.WHITE_BISHOP_INDEXES
+        knight = constants.WHITE_KNIGHT
+        queen = constants.WHITE_QUEEN
+        rook = constants.WHITE_ROOK
+
+        if color == constants.BLACK:
+            knight_indexes = constants.BLACK_KNIGHT_INDEXES
+            bishop_indexes = constants.BLACK_BISHOP_INDEXES
+            knight = constants.BLACK_KNIGHT
+            queen = constants.BLACK_QUEEN
+            rook = constants.BLACK_ROOK
+
+        minor_pieces_developed = 0
+        for index in knight_indexes:
+            if not self.board_development & 1 << index:
+                minor_pieces_developed += 1
+
+        for index in bishop_indexes:
+            if not self.board_development & 1 << index:
+                minor_pieces_developed += 1
+        if self.last_move[0] == queen and minor_pieces_developed < 2:
+            evaluate_value -= 0.5
+        elif self.last_move[0] == rook and minor_pieces_developed < 2:
+            evaluate_value -= 0.5
+        if self.last_move[0] == knight:
+            left_bishop, right_bishop = bishop_indexes
+            if self.board_development & 1 << left_bishop or self.board_development & 1 << right_bishop:
+                evaluate_value += 0.2
+
+        return evaluate_value
+    
+    def get_endgame_points(self, color):
+        evaluate_value = 0
+        point_rank_per_row = [0.75, 0.5, 0.35, 0.25]
+        if color == constants.BLACK:
+            king = self.black_king
+        else:
+            point_rank_per_row = point_rank_per_row[::-1]
+            king = self.white_king
+
+        # king mobility
+        king_index = utils.singleton_board_to_index(king)
+        king_moves = self.get_moves(king_index)
+        
+        evaluate_value += king_moves.bit_count() * 0.15
+
+        for i, row_rank_val in enumerate(point_rank_per_row):
+            row_mask = 60 << 8 * (i + 2)
+            if king & row_mask:
+                evaluate_value += row_rank_val
+            
+        return evaluate_value
+
         
 
         
+
         
-            
-            
-            
+
+
+
+
+    

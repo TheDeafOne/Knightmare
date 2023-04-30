@@ -127,16 +127,18 @@ class MoveGenerator:
         
         king_index = utils.singleton_board_to_index(self.board.white_king if self.player == self.board.white_pieces else self.board.black_king)
 
-        # 0 is attacking piece
-        is_piece_pinned = self._is_pinned(index)
+        # 0 is attacking piece, 1 is line of attack
         # 0 is attacking piece, 1 is the line of attack
         is_king_in_check = self._in_check(king_index, king_index)
         
         if is_king_in_check[0]:
-            move_board &= is_king_in_check[1]
-        elif is_piece_pinned[1]:
-            move_board |= is_piece_pinned[0]
-            move_board &= is_piece_pinned[1]
+            move_board &= is_king_in_check[1]    
+        else:
+            is_piece_pinned = self._is_pinned(index)
+            if is_piece_pinned[1]:
+                move_board |= is_piece_pinned[0]
+                move_board &= is_piece_pinned[1]
+            
         return move_board
 
     '''
@@ -536,6 +538,9 @@ class MoveGenerator:
         attacking = king_check[0]
         if attacking == 0:
             return False
+        
+        if king_board == 0:
+            return True
 
         # verify double check (no moves means automatic checkmate)
         if attacking and (attacking & (attacking - 1)) > 0:
@@ -544,12 +549,15 @@ class MoveGenerator:
         tmp = self.player
         self.player = self.opponent
         self.opponent = tmp
-  
+
         attacking_index = utils.singleton_board_to_index(attacking)
         attacker_check = self._in_check(attacking_index, attacking_index)
 
+
         attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
         line_of_attack = attacker_moves & king_check[1]
+        # line_of_attack |= king_board
+
         blocking_pieces = utils.board_to_indexes(self.opponent)
         blocking_pieces.remove(king_index)
         for piece in blocking_pieces:
@@ -579,14 +587,17 @@ class MoveGenerator:
             self.opponent = self.board.white_pieces
 
         king_index = utils.singleton_board_to_index(king_board)
-
         self.board.set_piece(constants.EMPTY, index)
 
         king_in_check = self._in_check(king_index, king_index)
         attacking, line_of_attack = 0, 0
         if king_in_check[0]:
             attacking = king_in_check[0]
+            # if attacking and (attacking & (attacking - 1)) > 0:
+            #     return 
+            
             attacking_index = utils.singleton_board_to_index(attacking)
+            
             attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
             line_of_attack = attacker_moves & king_in_check[1]
 
