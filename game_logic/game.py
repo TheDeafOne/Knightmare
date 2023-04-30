@@ -60,6 +60,9 @@ class Chess:
         self.window = pygame.display.set_mode(self.WINDOW_SIZE)
         pygame.display.set_caption("Knightmare")
 
+        self.checkbox1_checked = True
+        self.checkbox2_checked = False
+
     def play(self):
         # Start the game loop
         while True:
@@ -68,6 +71,20 @@ class Chess:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.player_state = "selection"
+                        self.current_player_color = "W"
+                        self.player_moves = []
+                        self.player_focus = None
+                        self.winner = ''
+                        self.window.fill(self.WHITE)
+
+                        self.board = Board()
+                        self.player = self.board.white_pieces
+                        self.opponent = self.board.black_pieces
+
+                        self.game_state = "start_menu"
 
                 elif self.game_state == "start_menu":
                     start_button, options_button, quit_button = self.draw_start_menu()
@@ -80,10 +97,19 @@ class Chess:
                             pygame.quit()
                             quit()
                         if options_button.collidepoint(mouse_position):
-                            print('go to options page')
+                            self.game_state = "options_menu"
+                            self.window.fill(self.WHITE)
 
                 elif self.game_state == "options_menu":
-                    self.draw_options_menu()
+                    check1_rect, check2_rect = self.draw_options_menu()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_position = pygame.mouse.get_pos()
+                        
+                        if check1_rect.collidepoint(mouse_position) or check2_rect.collidepoint(mouse_position):
+                            self.checkbox1_checked = not self.checkbox1_checked
+                            self.checkbox2_checked = not self.checkbox2_checked
+ 
+
                 elif self.game_state == "game":
                     self.draw_game()
                     
@@ -133,20 +159,6 @@ class Chess:
                                     self.player_moves = []
                                     self.player_focus = None
                                     self.player_state = "selection"
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            self.player_state = "selection"
-                            self.current_player_color = "W"
-                            self.player_moves = []
-                            self.player_focus = None
-                            self.winner = ''
-                            self.window.fill(self.WHITE)
-
-                            self.board = Board()
-                            self.player = self.board.white_pieces
-                            self.opponent = self.board.black_pieces
-
-                            self.game_state = "start_menu"
 
                 elif self.game_state == "over":
                     self.draw_game()
@@ -195,7 +207,39 @@ class Chess:
         return start_text_rect, options_text_rect, quit_text_rect
 
     def draw_options_menu(self):
-        pass
+        title_font = pygame.font.SysFont(None,25)
+        notif_font = pygame.font.SysFont(None, 20)
+        font = pygame.font.SysFont(None, 24)
+        CHECKBOX_SIZE = 24
+        checkbox1_rect = pygame.Rect(50, 130, CHECKBOX_SIZE, CHECKBOX_SIZE)
+        checkbox2_rect = pygame.Rect(50, 180, CHECKBOX_SIZE, CHECKBOX_SIZE)
+        pygame.draw.rect(self.window, (0, 0, 0), checkbox1_rect, 2)
+        pygame.draw.rect(self.window, (0, 0, 0), checkbox2_rect, 2)
+        if self.checkbox1_checked:
+            pygame.draw.line(self.window, (0, 0, 0), (checkbox1_rect.x + 2, checkbox1_rect.centery), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (0, 0, 0), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), (checkbox1_rect.right - 2, checkbox1_rect.top + 2), 2)
+
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.x + 2, checkbox2_rect.centery), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), (checkbox2_rect.right - 2, checkbox2_rect.top + 2), 2)
+            
+        if self.checkbox2_checked:
+            pygame.draw.line(self.window, (0, 0, 0), (checkbox2_rect.x + 2, checkbox2_rect.centery), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (0, 0, 0), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), (checkbox2_rect.right - 2, checkbox2_rect.top + 2), 2)
+
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.x + 2, checkbox1_rect.centery), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), (checkbox1_rect.right - 2, checkbox1_rect.top + 2), 2)
+        
+        checkbox_title = title_font.render("check the type of game you want to play", True, (0, 0, 0))
+        notif_text = notif_font.render("Press escape any time to return to the main menu", True, self.BLACK)
+        label1 = font.render("AI vs Human", True, (0, 0, 0))
+        label2 = font.render("AI vs AI", True, (0, 0, 0))
+        self.window.blit(checkbox_title, (50, 50))
+        self.window.blit(notif_text, (50,55 + checkbox_title.get_height()))
+        self.window.blit(label1, (checkbox1_rect.right + 10, checkbox1_rect.centery - label1.get_height() // 2))
+        self.window.blit(label2, (checkbox2_rect.right + 10, checkbox2_rect.centery - label2.get_height() // 2))
+
+        return checkbox1_rect, checkbox2_rect
+
 
     def draw_game(self):
         # Draw the chess board
@@ -270,9 +314,6 @@ class Chess:
         self.window.blit(outline_surface, notif_position)
         self.window.blit(winner_label, notif_position)
         self.window.blit(escape_label, (notif_position[0]+text_width//2-escape_label.get_width()//2, notif_position[1] + text_height))
-
-
-
 
     def get_square_clicked(self, position):
         x, y = position
