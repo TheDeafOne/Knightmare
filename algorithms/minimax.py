@@ -31,6 +31,7 @@ class MiniMax():
     def __init__(self):
         self.MAX_DEPTH = 2 # ply depth is MAX_DEPTH + 1
         self.next_move = tuple()
+        self.use_eval_functions = True
 
     '''
         Gets the minimax optimized next move for the given player on a given board
@@ -161,7 +162,7 @@ class MiniMax():
     '''
     def get_max(self,board,color,is_terminal_board):
         # start = datetime.datetime.now()
-        score = board.get_score(color, is_terminal_board) # get score using a function of the board
+        score = board.get_score(color, is_terminal_board) if self.use_eval_functions else 0 # get score using a function of the board
         # end = datetime.datetime.now()
         # print((end-start).total_seconds())
         return score
