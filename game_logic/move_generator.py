@@ -150,8 +150,8 @@ class MoveGenerator:
         else:
             is_piece_pinned = self._is_pinned(index)
             if is_piece_pinned[1]:
-                move_board |= is_piece_pinned[0]
                 move_board &= is_piece_pinned[1]
+                move_board |= is_piece_pinned[0]
             
         return move_board
 
