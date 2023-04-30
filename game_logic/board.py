@@ -319,7 +319,9 @@ class Board:
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
-        return int(self.move_generator._in_mate(king))
+        if not int(self.move_generator._in_mate(king)) and not self.get_moves(utils.singleton_board_to_index(king)):
+            return 1
+        return 0
         
 
     '''
