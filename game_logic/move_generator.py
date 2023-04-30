@@ -1,20 +1,20 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
-import math
+
 
 class MoveGenerator:
     '''
         A helper class used to generate moves and manage the various processes around move generation, including
         managing the moves for a king based on whether those moves will put the king in check or not
 
-        
-        
+
+
         ATTRIBUTES
 
         board: the integer representation of the current board
         opponent: the integer representation of the opponent pieces
         player: the integer representation of the player pieces
 
-        
+
 
         METHODS
 
@@ -84,7 +84,7 @@ class MoveGenerator:
             constants.WHITE_QUEEN: self._get_queen_moves,
             constants.WHITE_KING: self._get_king_moves
         }
-        
+
     '''
         gets all the possible moves the piece in the given square could possibly make, if any
         
@@ -95,7 +95,7 @@ class MoveGenerator:
         an integer map of the possible moves the piece at the given square could make
     '''
 
-    def generate_moves(self, square, is_swapped = False):
+    def generate_moves(self, square, is_swapped=False):
         # convert square to index and get piece
         index = square
         if type(square) == str:
@@ -111,7 +111,7 @@ class MoveGenerator:
             self.player = self.board.get_piece_color(piece)
 
         move_board = 0
-        # Generate moves based on piece type
+        # Generate moves based on piece type and update move_board accordingly
         if piece == constants.WHITE_PAWN or piece == constants.BLACK_PAWN:
             move_board = self._get_pawn_moves(index)
         elif piece == constants.WHITE_KNIGHT or piece == constants.BLACK_KNIGHT:
@@ -129,30 +129,44 @@ class MoveGenerator:
             return 0
         king_index = utils.singleton_board_to_index(king_board)
 
-        if (is_swapped): return move_board
-            
+        if (is_swapped):
+            return move_board
+
+        # check if the king is in check
         # 0 is attacking piece, 1 is line of attack
-        # 0 is attacking piece, 1 is the line of attack
         is_king_in_check = self._in_check(king_index, king_index)
 
-        
         if is_king_in_check[0]:
-            attacking_index = utils.singleton_board_to_index(is_king_in_check[0])
+            # get attacking index/piece
+            attacking_index = utils.singleton_board_to_index(
+                is_king_in_check[0])
             attacking_piece = self.board.get_piece(attacking_index)
+
+            # multiple attacking pieces, double check is impossible to get out of
             if attacking_index < 0:
                 return 0
-            attacking_moves = self.piece_move_map[attacking_piece.upper()](attacking_index)
-            blocking_moves = is_king_in_check[1] & (is_king_in_check[0] | attacking_moves)
+
+            # get line of attack
+            attacking_moves = self.piece_move_map[attacking_piece.upper()](
+                attacking_index)
+            blocking_moves = is_king_in_check[1] & (
+                is_king_in_check[0] | attacking_moves)
             actual_moves = move_board
+
+            # only allow moves that blocks the check
             move_board &= blocking_moves
+
+            # king can still move and attack as long as it doesn't cause a check
             if piece == constants.BLACK_KING or piece == constants.WHITE_KING:
                 move_board |= actual_moves
         else:
+            # verify that the piece is not pinned, and handle accordingly if it is
             is_piece_pinned = self._is_pinned(index)
             if is_piece_pinned[1]:
+                # only moves available are within the line of attack or the attacking piece
                 move_board &= is_piece_pinned[1]
                 move_board |= is_piece_pinned[0]
-            
+
         return move_board
 
     '''
@@ -407,6 +421,7 @@ class MoveGenerator:
     '''
 
     def _get_queen_moves(self, index):
+        # queen moves is equivalent to rook moves | bishop moves of given index
         moves = self._get_bishop_moves(index)
         moves |= self._get_rook_moves(index)
         return moves
@@ -422,9 +437,14 @@ class MoveGenerator:
     '''
 
     def _get_king_moves(self, index):
+        # set up a temporary king piece to get the king color and further management when swapping/replaced
         tmp_king = self.board.get_piece(index)
-        self.board.set_piece(constants.EMPTY,index)
+        self.board.set_piece(constants.EMPTY, index)
+
+        # ongoing movement collection for king
         moves = 0
+
+        # get all positions around king and determine if the king can move into each position
         for i in [1, 7, 8, 9]:
             top_index = index + i
             bottom_index = index - i
@@ -435,9 +455,11 @@ class MoveGenerator:
                 moves |= 1 << top_index
             if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index)[0]:
                 moves |= 1 << bottom_index
+
+        # reassign king to given index now that all feasible positions were found
         self.board.set_piece(tmp_king, index)
+
         return moves
-   
 
     '''
         Determines whether moving the king to a given index will put the king in check or not.
@@ -445,6 +467,9 @@ class MoveGenerator:
         and comparing those move sets to the opponents actual pieces. 
         If the two overlap (i.e. if the imitated pawn moves overlaps with the opponent pawn moves), the king would be in check.
         This is done for evey piece.
+
+        Note that this is essentially an is_attacked function that determines whether a given piece is being attacked,
+        but because of its initial setup and use for king checks, we call it in_check
 
         PARAMS 
         index: an integer identifying the cell the king may tentatively be able to move to
@@ -454,8 +479,8 @@ class MoveGenerator:
     def _in_check(self, index, relative_to):
         # verify that the move_to square is next to (board-wise) the move_from square (i.e. index must be next to relative_to)
         if not self._is_next_to(index, relative_to) or index < 0:
-            return (-1, -1) # i.e. True
-        
+            return (-1, -1)  # i.e. True
+
         # determine which piece color to compare to when sensing
         if self.opponent == self.board.black_pieces:
             # set opponent piece set
@@ -474,37 +499,44 @@ class MoveGenerator:
             rooks = self.board.white_rooks
             queens = self.board.white_queens
             king = self.board.white_king
-        
+
+        # ongoing board of pieces checking the king
         checking_pieces = 0
         test_checked_piece = 0
 
+        # board of squares the king has searched for enemies
         search_field = 0
-        
-        # determine what moves would cause a check, if any
+
+        # determine what moves would cause a check, if any, add to check_board accordingly
+        # simulate pawn moves
         pawn_moves = self._get_pawn_moves(index)
         test_checked_piece = pawns & pawn_moves
         if test_checked_piece:
             search_field |= pawn_moves
             checking_pieces |= test_checked_piece
-        
+
+        # simulate knight moves
         knight_moves = self._get_knight_moves(index)
         test_checked_piece = knights & knight_moves
         if test_checked_piece:
             search_field |= knight_moves
             checking_pieces |= test_checked_piece
-        
+
+        # simulate bishop moves
         bishop_moves = self._get_bishop_moves(index)
         test_checked_piece = bishops & bishop_moves
         if test_checked_piece:
             search_field |= bishop_moves
             checking_pieces |= test_checked_piece
-        
+
+        # simulate rook moves
         rook_moves = self._get_rook_moves(index)
         test_checked_piece = rooks & rook_moves
-        
         if test_checked_piece:
             search_field |= rook_moves
             checking_pieces |= test_checked_piece
+
+        # simulate queen moves (needed even though rook/bishop already called)
         queen_moves = self._get_queen_moves(index)
         test_checked_piece = queens & queen_moves
         if test_checked_piece:
@@ -527,72 +559,105 @@ class MoveGenerator:
             if bottom_index >= 0 and self._is_next_to(index, bottom_index):
                 tentative_king_positions |= 1 << bottom_index
 
+        # validate simulated king moves and adjust search field/check board accordingly
         test_checked_piece = tentative_king_positions & king
         if test_checked_piece:
             search_field |= tentative_king_positions
             checking_pieces |= test_checked_piece
 
-        
-        # true if king in check, false otherwise
+        # i.e. (attacking pieces, places the king looked at for attacking pieces)
         return checking_pieces, search_field
-    
+
     '''
-        this function assumes no moves are available to the given king
+        This determines whether the given king is in check.
+        Note that this function assumes no moves are available to the given king, the caller must handle that logic
+
+        PARAMS
+        king_board: bitboard of an arbitrary king
+
+        RETURNS
+        True if the given king is in mate, false otherwise
     '''
+
     def _in_mate(self, king_board):
+        # get player/opponent color
         self.player = self.board.white_pieces
         self.opponent = self.board.black_pieces
-        
+
         if king_board == self.board.black_king:
             self.player = self.board.black_pieces
             self.opponent = self.board.white_pieces
 
+        # get king information of received color
         king_index = utils.singleton_board_to_index(king_board)
         king_check = self._in_check(king_index, king_index)
         attacking = king_check[0]
+
+        # nobody is attacking
         if attacking == 0:
             return False
-        
+
+        # king has been taking (this is for minimax compatibility and will not be used in a human v human game)
         if king_board == 0:
             return True
 
         # verify double check (no moves means automatic checkmate)
         if attacking and (attacking & (attacking - 1)) > 0:
             return True
-    
+
+        # swap players to get attacking piece moves
         tmp = self.player
         self.player = self.opponent
         self.opponent = tmp
 
+        # get attacking piece info
         attacking_index = utils.singleton_board_to_index(attacking)
         attacker_check = self._in_check(attacking_index, attacking_index)
+        attacker_moves = self.piece_move_map[self.board.get_piece(
+            attacking_index).upper()](attacking_index)
 
-
-        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
+        # get lines between attacking piece and attacked piece as a bitboard
         line_of_attack = attacker_moves & king_check[1]
-        # line_of_attack |= king_board
 
+        # get pieces blocking the line of attack
         blocking_pieces = utils.board_to_indexes(self.opponent)
         blocking_pieces.remove(king_index)
         for piece in blocking_pieces:
             blocking_moves = self.generate_moves(piece)
             if blocking_moves & line_of_attack:
                 return False
-        
+
+        # attacking piece cannot be taken and no piece can block it, king is in mate
         if not attacker_check[0]:
             return True
+
+        # king not in mate
         return False
-        
-        # check if the checking piece cant be captured
-        # check if the line of attack can't be blocked
-    
+
+    '''
+        Determines if the piece in the given square is pinned
+
+        PARAMS
+        square: an index identifying the location of the piece to be analyzed for pinning
+
+        RETURNS
+        a pair of values: attacking (bitboard of the attacking pieces) 
+        and line_of_attack (a bitboard of the line between the attacking pieces and the pinned piece)
+    '''
+
     def _is_pinned(self, square):
+        # convert square to index
         index = square
         if type(square) == str:
             index = utils.square_to_index(square)
+
+        # square contains no piece
         if index < 0:
-            return (0, 0)
+            return (0, 0)  # no attackers or line of attack
+
         piece = self.board.get_piece(index)
+
+        # determine piece color
         king_board = self.board.white_king
         self.player = self.board.white_pieces
         self.opponent = self.board.black_pieces
@@ -601,29 +666,30 @@ class MoveGenerator:
             self.player = self.board.black_pieces
             self.opponent = self.board.white_pieces
 
-        
-  
+        # get information of king with same color as given piece
         king_index = utils.singleton_board_to_index(king_board)
-        
+
+        # temporarily remove given piece from board
         self.board.set_piece(constants.EMPTY, index)
 
+        # if king in check, piece was protecting it, meaning the piece is pinned
         king_in_check = self._in_check(king_index, king_index)
 
+        # determine the attacking piece and its line of attack
         attacking, line_of_attack = 0, 0
         if king_in_check[0]:
             attacking = king_in_check[0]
-            # if attacking and (attacking & (attacking - 1)) > 0:
-            #     return 
-            
+
             attacking_index = utils.singleton_board_to_index(attacking)
-            
-            attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
+
+            attacker_moves = self.piece_move_map[self.board.get_piece(
+                attacking_index).upper()](attacking_index)
             line_of_attack = attacker_moves & king_in_check[1]
 
+        # replace piece now that its pin was determined
         self.board.set_piece(piece, index)
 
         return attacking, line_of_attack
-        
 
     '''
         determines whether a given cell a is next to a given cell b. This is to manage out of board errors when doing bitshifts
@@ -677,7 +743,6 @@ class MoveGenerator:
         if type(square) == str:
             index = utils.square_to_index(square)
         return bool(self.opponent & 1 << index)
-
 
     '''
         parses the moves of a given square into a list of tuples
