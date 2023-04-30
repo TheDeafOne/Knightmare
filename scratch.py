@@ -164,5 +164,7 @@ if __name__ == "__main__":
     # testing_enable_moves()
     # get_endgame_king_eval()
     # # minor_piece_dev_test()
-    # king_check_bug_tests()
+    
+    king_check_bug_tests()
+    king_block_bug_tests()
     king_block_bug_tests2()
