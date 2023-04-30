@@ -175,9 +175,12 @@ class Chess:
                         is_mate = self.board.move_piece(move[0], move[1])
                         self.draw_game()
                         print(self.board.get_piece(move[1]),move[0],move[1])
-                        if is_mate:
+                        if is_mate == 1:
                             self.game_state = "over"
                             self.winner = self.current_player_color
+                        elif is_mate == 2:
+                            self.game_state = "over"
+                        
                         # switch players
                         if self.current_player_color == constants.WHITE:
                             self.current_player_color = constants.BLACK
@@ -364,13 +367,22 @@ class Chess:
 
     def draw_winner(self):
         winner_font = pygame.font.SysFont("Arial", 50, bold=True)
-        winner = "black" if self.winner == 'B' else "white"
-        text_color = (0,0,0) if winner == "black" else (255, 255, 255)
+        winner = "nobody"
+        text_color = (255, 255, 255)
+        surface_color = (128, 128, 128)
+        if self.winner == constants.BLACK:
+            winner = "black"
+            text_color = (0,0,0)
+            surface_color = (255, 255, 255)
+        elif self.winner == constants.WHITE:
+            winner = "white"
+            text_color = (255, 255, 255)
+            surface_color = (0, 0, 0)
 
         winner_label = winner_font.render(winner + " won", True, text_color)
         text_width, text_height = winner_label.get_width(), winner_label.get_height()
         outline_surface = pygame.Surface((text_width + 2, text_height*1.5))
-        outline_surface.fill(pygame.Color("white" if winner == "black" else "black"))
+        outline_surface.fill(pygame.Color(surface_color))
 
         escape_font = pygame.font.SysFont("Arial", 25, bold=True)
         escape_label = escape_font.render("Press escape", True, text_color)

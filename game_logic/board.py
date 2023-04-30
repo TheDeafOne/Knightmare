@@ -279,6 +279,7 @@ class Board:
     def move_piece(self, from_square, to_square):
         if self.num_moves >= 200:
             return 2
+        self.num_moves += 1
         # get pieces
         to_piece = self.get_piece(to_square)
         from_piece = self.get_piece(from_square)
