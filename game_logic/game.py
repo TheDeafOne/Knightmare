@@ -140,12 +140,15 @@ class Chess:
                                 self.ply_value = value
                                              
                 elif self.game_state == "game":
+                    # https://github.com/pygame/pygame/issues/2011
+                    if not pygame.display.get_active():
+                        continue
                     self.draw_game()
                     move = []
                     if self.checkbox2_checked and self.current_player_color == constants.BLACK:
                         move = self.minimax.get_next_move(self.board, constants.BLACK)
                     elif self.checkbox3_checked:
-                        move = self.minimax.get_next_move(self.board, self.player)
+                        move = self.minimax.get_next_move(self.board, self.current_player_color)
                     else:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             mouse_position = pygame.mouse.get_pos()
@@ -194,6 +197,11 @@ class Chess:
                         self.player_moves = []
                         self.player_focus = None
                         self.player_state = "selection"
+                    #https://stackoverflow.com/questions/18839039/how-to-wait-some-time-in-pygame
+                    # pygame.display.update()
+                    # pygame.event.pump()
+                    # pygame.time.delay(1000)
+                    
 
 
                 elif self.game_state == "over":
@@ -340,20 +348,22 @@ class Chess:
                 (i + 1) * self.SQUARE_SIZE - self.SQUARE_SIZE/8,
                 self.SQUARE_SIZE*8))
         
-        current_player = 'W'
+        current_player = constants.WHITE
         current_color = self.WHITE
+        current_player_char = "W"
         contrast = 0
         letter_pos = 8
         if self.player == self.board.black_pieces:
-            current_player = 'B'
+            current_player = constants.BLACK
             current_color = self.BLACK
+            current_player_char = "B"
             contrast = 2
             letter_pos = 6
 
         player_indication_position = (self.SQUARE_SIZE/letter_pos,self.WINDOW_SIZE[0]-self.SQUARE_SIZE/2)
         pygame.draw.circle(self.window, self.WHITE, (self.SQUARE_SIZE/3.5,self.WINDOW_SIZE[0]-self.SQUARE_SIZE/4), self.SQUARE_SIZE/4)
         pygame.draw.circle(self.window, self.BLACK, (self.SQUARE_SIZE/3.5,self.WINDOW_SIZE[0]-self.SQUARE_SIZE/4), self.SQUARE_SIZE/4, contrast)
-        player_label = index_font.render(current_player, True, current_color)
+        player_label = index_font.render(current_player_char, True, current_color)
         self.window.blit(player_label, player_indication_position)
 
         if self.player_moves:
@@ -363,7 +373,7 @@ class Chess:
 
     def draw_winner(self):
         winner_font = pygame.font.SysFont("Arial", 50, bold=True)
-        winner = "black" if self.winner == 'B' else "white"
+        winner = "black" if self.winner == constants.BLACK else "white"
         text_color = (0,0,0) if winner == "black" else (255, 255, 255)
 
         winner_label = winner_font.render(winner + " won", True, text_color)
