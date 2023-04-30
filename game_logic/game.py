@@ -138,6 +138,7 @@ class Chess:
                             if 0 < value < 10 :
                                 self.ply_text += event.unicode
                                 self.ply_value = value
+                                self.minimax.MAX_DEPTH = value - 1
                                              
                 elif self.game_state == "game":
                     self.draw_game()
@@ -145,7 +146,7 @@ class Chess:
                     if self.checkbox2_checked and self.current_player_color == constants.BLACK:
                         move = self.minimax.get_next_move(self.board, constants.BLACK)
                     elif self.checkbox3_checked:
-                        move = self.minimax.get_next_move(self.board, self.player)
+                        move = self.minimax.get_next_move(self.board, self.current_player_color)
                     else:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             mouse_position = pygame.mouse.get_pos()
@@ -171,7 +172,6 @@ class Chess:
                                         move = self.player_focus, position
                                         # verify checkmate and switch state if true
                     if move:
-                                    
                         is_mate = self.board.move_piece(move[0], move[1])
                         self.draw_game()
                         print(self.board.get_piece(move[1]),move[0],move[1])
