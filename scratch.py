@@ -10,7 +10,7 @@ def test_minimax():
     minimax = MiniMax()
 
     for i in range(100):
-        print('move',i)
+        print('move', i)
         start = datetime.datetime.now()
         if (i % 2 == 0):
             next_move = minimax.get_next_move(board, constants.WHITE)
@@ -91,8 +91,9 @@ def development_order_evaluation_test():
 
 def get_focal_point():
     board = Board()
-    board.move_piece('a1','c4')
-    print(board.get_score(None,None))
+    board.move_piece('a1', 'c4')
+    print(board.get_score(None, None))
+
 
 def duplicate_king_glitch():
     board = Board()
@@ -101,37 +102,41 @@ def duplicate_king_glitch():
     board.undo_last()
     print(board.get_board_string())
 
+
 def testing_enable_moves():
     board = Board()
-    board.move_piece('b8','d3')
+    board.move_piece('b8', 'd3')
     # board.move_piece('d1','c2')
     moves = board.get_moves('d1')
     board.highlight_moves(moves)
 
     print(board.get_board_string())
 
+
 def get_endgame_king_eval():
     board = Board()
-    board.move_piece('e8','e4')
+    board.move_piece('e8', 'e4')
     print(board.get_endgame_points(constants.BLACK))
     print(board.get_board_string())
 
+
 def minor_piece_dev_test():
     board = Board()
-    board.move_piece('b1','c3')
-    print(board.get_score(constants.WHITE,None))
+    board.move_piece('b1', 'c3')
+    print(board.get_score(constants.WHITE, None))
+
 
 def king_check_bug_tests():
     board = Board()
-    board.set_piece(constants.EMPTY,'e7')
-    print(board.move_piece('d2','d7'))
+    board.set_piece(constants.EMPTY, 'e7')
+    print(board.move_piece('d2', 'd7'))
     print(board.get_board_string())
     moves = board.get_moves('d8')
     print(utils.bin_to_string(moves))
 
 
 if __name__ == "__main__":
-    # test_minimax()
+    test_minimax()
 
     # duplicate_king_glitch()
     # print_initial_board()
@@ -140,7 +145,5 @@ if __name__ == "__main__":
     # get_focal_point()
     # testing_enable_moves()
     # get_endgame_king_eval()
-    # minor_piece_dev_test()
+    # # minor_piece_dev_test()
     king_check_bug_tests()
-
-

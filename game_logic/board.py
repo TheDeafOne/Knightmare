@@ -313,9 +313,9 @@ class Board:
                 self.set_piece(constants.BLACK_QUEEN, to_square)
 
         if (from_piece == constants.BLACK_KING):
-            self.get_king_shelter(constants.BLACK)
+            self.evaluations.get_king_shelter(constants.BLACK)
         elif (from_piece == constants.WHITE_KING):
-            self.get_king_shelter(constants.WHITE)
+            self.evaluations.get_king_shelter(constants.WHITE)
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
