@@ -82,7 +82,13 @@ class MoveGenerator:
             constants.WHITE_KNIGHT: self._get_knight_moves,
             constants.WHITE_ROOK: self._get_rook_moves,
             constants.WHITE_QUEEN: self._get_queen_moves,
-            constants.WHITE_KING: self._get_king_moves
+            constants.WHITE_KING: self._get_king_moves,
+            constants.BLACK_BISHOP: self._get_bishop_moves,
+            constants.BLACK_PAWN: self._get_pawn_moves,
+            constants.BLACK_KNIGHT: self._get_knight_moves,
+            constants.BLACK_ROOK: self._get_rook_moves,
+            constants.BLACK_QUEEN: self._get_queen_moves,
+            constants.BLACK_KING: self._get_king_moves
         }
         
     '''
@@ -133,7 +139,12 @@ class MoveGenerator:
         
         
         if is_king_in_check[0]:
-            move_board &= is_king_in_check[1] & (is_king_in_check[0] | self.board.get_moves(utils.singleton_board_to_index(is_king_in_check[0])))
+            t_indexes = utils.board_to_indexes(is_king_in_check[0])
+            if len(t_indexes) > 1:
+                return 0
+            t_piece = self.board.get_piece(t_indexes[0])
+            t_moves = self.piece_move_map[t_piece](t_indexes[0])
+            move_board &= is_king_in_check[1] & (is_king_in_check[0] | t_moves)
             
         else:
             is_piece_pinned = self._is_pinned(index)
