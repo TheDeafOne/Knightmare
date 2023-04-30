@@ -120,6 +120,7 @@ def minor_piece_dev_test():
     board = Board()
     board.move_piece('b1','c3')
     print(board.get_score(constants.WHITE,None))
+    print(board.get_board_string())
 
 
 if __name__ == "__main__":
