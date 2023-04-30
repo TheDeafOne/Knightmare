@@ -123,7 +123,7 @@ class MoveGenerator:
         elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
             move_board = self._get_queen_moves(index)
         elif piece == constants.WHITE_KING or piece == constants.BLACK_KING:
-            return self._get_king_moves(index)
+            move_board = self._get_king_moves(index)
         
         king_index = utils.singleton_board_to_index(self.board.white_king if self.player == self.board.white_pieces else self.board.black_king)
 
