@@ -127,7 +127,7 @@ class Evaluations():
         color: the color whose perspective we are evaluating from
         
         RETURNS
-        mobility: the mobility utility score of the given color for the current board      
+        a number equal to the mobility utility score of the given color for the current board      
         
     '''
     
@@ -161,7 +161,7 @@ class Evaluations():
         color: the color whose perspective we are evaluating from
         
         RETURNS
-        position_score: the position utility score of the given color for the current board
+        a number equal to the position utility score of the given color for the current board
                 
     '''
     
@@ -207,7 +207,7 @@ class Evaluations():
         pawn: the piece strength of a pawn
         
         RETURNS
-        attack_potential: the attacking potential utility score of the given color for the current board
+        a number equalt to the attacking potential utility score of the given color for the current board
     '''
     
     def get_attacking_potential(self, all_moves, color, queen, rook, bishop, knight, pawn):
@@ -294,7 +294,7 @@ class Evaluations():
         color: the color whose perspective we are evaluating from
         
         RETURNS
-        king_security: the sum of all points assigned based on pieces sheltering the given color's king
+        the sum of all points assigned based on pieces sheltering the given color's king
         
     '''
     
