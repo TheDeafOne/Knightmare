@@ -123,7 +123,7 @@ def minor_piece_dev_test():
 
 
 if __name__ == "__main__":
-    # test_minimax()
+    test_minimax()
 
     # duplicate_king_glitch()
     # print_initial_board()
@@ -132,4 +132,5 @@ if __name__ == "__main__":
     # get_focal_point()
     # testing_enable_moves()
     # get_endgame_king_eval()
-    minor_piece_dev_test()
+    # minor_piece_dev_test()
+

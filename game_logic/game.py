@@ -1,7 +1,7 @@
 import pygame
 from .board import Board
 from .board_utils import BoardUtils as utils, BoardConstants as constants
-
+from algorithms.minimax import MiniMax
 
 class Chess:
     def __init__(self):
@@ -50,10 +50,15 @@ class Chess:
         # game states
         self.game_state = "start_menu"
         self.player_state = "selection"
-        self.current_player_color = "W"
+        self.current_player_color = constants.WHITE
         self.player_moves = []
         self.player_focus = None
         self.winner = ''
+
+        self.focused_on_ply_textbox = False
+        self.ply_text = "3"
+        self.ply_input_range = range(1, 10)  # Only allow integers from 1 to 10
+        self.ply_value = 3
 
         # Create the window
         pygame.init()
@@ -62,6 +67,9 @@ class Chess:
 
         self.checkbox1_checked = True
         self.checkbox2_checked = False
+        self.checkbox3_checked = False
+
+        self.minimax = MiniMax()
 
     def play(self):
         # Start the game loop
@@ -74,7 +82,7 @@ class Chess:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.player_state = "selection"
-                        self.current_player_color = "W"
+                        self.current_player_color = constants.WHITE
                         self.player_moves = []
                         self.player_focus = None
                         self.winner = ''
@@ -86,7 +94,7 @@ class Chess:
 
                         self.game_state = "start_menu"
 
-                elif self.game_state == "start_menu":
+                if self.game_state == "start_menu":
                     start_button, options_button, quit_button = self.draw_start_menu()
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
@@ -101,68 +109,97 @@ class Chess:
                             self.window.fill(self.WHITE)
 
                 elif self.game_state == "options_menu":
-                    check1_rect, check2_rect = self.draw_options_menu()
+                    check1_rect, check2_rect, check3_rect, textbox = self.draw_options_menu()
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
                         
-                        if check1_rect.collidepoint(mouse_position) or check2_rect.collidepoint(mouse_position):
-                            self.checkbox1_checked = not self.checkbox1_checked
-                            self.checkbox2_checked = not self.checkbox2_checked
- 
+                        if check1_rect.collidepoint(mouse_position):
+                            self.checkbox1_checked = True 
+                            self.checkbox2_checked = False
+                            self.checkbox3_checked = False
+                        if check2_rect.collidepoint(mouse_position):
+                            self.checkbox1_checked = False
+                            self.checkbox2_checked = True 
+                            self.checkbox3_checked = False
+                        if check3_rect.collidepoint(mouse_position):
+                            self.checkbox1_checked = False 
+                            self.checkbox2_checked = False
+                            self.checkbox3_checked = True
+                        elif textbox.collidepoint(mouse_position):
+                            print('hey',self.focused_on_ply_textbox)
+                            self.focused_on_ply_textbox = True
 
+                    if event.type == pygame.KEYDOWN and self.focused_on_ply_textbox:
+                        if event.key == pygame.K_BACKSPACE:
+                            self.ply_text = self.ply_text[:-1]
+                        
+                        elif event.unicode.isdigit() and len(self.ply_text) < 1:
+                            value = int(event.unicode)
+                            if 0 < value < 10 :
+                                self.ply_text += event.unicode
+                                self.ply_value = value
+                                             
                 elif self.game_state == "game":
                     self.draw_game()
-                    
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_position = pygame.mouse.get_pos()
-                        position = self.get_square_clicked(mouse_position)
-      
-                        if position != None:
-                            piece = self.board.get_piece(position)
-                            if self.player_state == "selection":
-                                if self.board.get_piece_color(piece) == self.player:
-                                    self.player_state = "move"
-                                    self.player_focus = position
-                                    self.player_moves = self.board.board_to_piece_list(
-                                        self.board.get_moves(position))
-                                    
-                            if self.player_state == "move":
-                                if position not in self.player_moves:
+                    move = []
+                    if self.checkbox2_checked and self.current_player_color == constants.BLACK:
+                        move = self.minimax.get_next_move(self.board, constants.BLACK)
+                    elif self.checkbox3_checked:
+                        move = self.minimax.get_next_move(self.board, self.player)
+                    else:
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            mouse_position = pygame.mouse.get_pos()
+                            position = self.get_square_clicked(mouse_position)
+        
+                            if position != None:
+                                piece = self.board.get_piece(position)
+                                if self.player_state == "selection":
                                     if self.board.get_piece_color(piece) == self.player:
+                                        self.player_state = "move"
                                         self.player_focus = position
                                         self.player_moves = self.board.board_to_piece_list(
                                             self.board.get_moves(position))
-                                else:
-                                    # move piece
-                                    is_mate = self.board.move_piece(self.player_focus, position)
-                                    print(is_mate)
-                                    # verify checkmate and switch state if true
-                                    if is_mate:
-                                        self.game_state = "over"
-                                        self.winner = self.current_player_color
-
-                                    print('move: ', (self.current_player_color, self.player_focus, position))
-                                    # switch players
-                                    if self.current_player_color == "W":
-                                        self.current_player_color = "B"
-                                        updated_player = self.board.black_pieces
-                                        updated_opponent = self.board.white_pieces
+                                        
+                                if self.player_state == "move":
+                                    if position not in self.player_moves:
+                                        if self.board.get_piece_color(piece) == self.player:
+                                            self.player_focus = position
+                                            self.player_moves = self.board.board_to_piece_list(
+                                                self.board.get_moves(position))
                                     else:
-                                        self.current_player_color = "W"
-                                        updated_player = self.board.white_pieces
-                                        updated_opponent = self.board.black_pieces
+                                        # move piece
+                                        move = self.player_focus, position
+                                        # verify checkmate and switch state if true
+                    if move:
+                                    
+                        is_mate = self.board.move_piece(move[0], move[1])
+                        print(self.board.get_piece(move[1]),move[0],move[1])
+                        if is_mate:
+                            self.game_state = "over"
+                            self.winner = self.current_player_color
+                        # switch players
+                        if self.current_player_color == constants.WHITE:
+                            self.current_player_color = constants.BLACK
+                            updated_player = self.board.black_pieces
+                            updated_opponent = self.board.white_pieces
+                        else:
+                            self.current_player_color = constants.WHITE
+                            updated_player = self.board.white_pieces
+                            updated_opponent = self.board.black_pieces
 
-                                    self.player = updated_player
-                                    self.opponent = updated_opponent
+                        self.player = updated_player
+                        self.opponent = updated_opponent
 
-                                    # switch player state
-                                    self.player_moves = []
-                                    self.player_focus = None
-                                    self.player_state = "selection"
+                        # switch player state
+                        self.player_moves = []
+                        self.player_focus = None
+                        self.player_state = "selection"
+
 
                 elif self.game_state == "over":
                     self.draw_game()
                     self.draw_winner()
+                    
 
 
             # Update the display
@@ -211,10 +248,12 @@ class Chess:
         notif_font = pygame.font.SysFont(None, 20)
         font = pygame.font.SysFont(None, 24)
         CHECKBOX_SIZE = 24
-        checkbox1_rect = pygame.Rect(50, 130, CHECKBOX_SIZE, CHECKBOX_SIZE)
-        checkbox2_rect = pygame.Rect(50, 180, CHECKBOX_SIZE, CHECKBOX_SIZE)
+        checkbox1_rect = pygame.Rect(50, 100, CHECKBOX_SIZE, CHECKBOX_SIZE)
+        checkbox2_rect = pygame.Rect(50, 150, CHECKBOX_SIZE, CHECKBOX_SIZE)
+        checkbox3_rect = pygame.Rect(50, 200, CHECKBOX_SIZE, CHECKBOX_SIZE)
         pygame.draw.rect(self.window, (0, 0, 0), checkbox1_rect, 2)
         pygame.draw.rect(self.window, (0, 0, 0), checkbox2_rect, 2)
+        pygame.draw.rect(self.window, (0, 0, 0), checkbox3_rect, 2)
         if self.checkbox1_checked:
             pygame.draw.line(self.window, (0, 0, 0), (checkbox1_rect.x + 2, checkbox1_rect.centery), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), 2)
             pygame.draw.line(self.window, (0, 0, 0), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), (checkbox1_rect.right - 2, checkbox1_rect.top + 2), 2)
@@ -222,23 +261,49 @@ class Chess:
             pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.x + 2, checkbox2_rect.centery), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), 2)
             pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), (checkbox2_rect.right - 2, checkbox2_rect.top + 2), 2)
             
-        if self.checkbox2_checked:
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox3_rect.x + 2, checkbox3_rect.centery), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), (checkbox3_rect.right - 2, checkbox3_rect.top + 2), 2)
+        
+        elif self.checkbox2_checked:
             pygame.draw.line(self.window, (0, 0, 0), (checkbox2_rect.x + 2, checkbox2_rect.centery), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), 2)
             pygame.draw.line(self.window, (0, 0, 0), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), (checkbox2_rect.right - 2, checkbox2_rect.top + 2), 2)
 
             pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.x + 2, checkbox1_rect.centery), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), 2)
             pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), (checkbox1_rect.right - 2, checkbox1_rect.top + 2), 2)
         
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox3_rect.x + 2, checkbox3_rect.centery), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), (checkbox3_rect.right - 2, checkbox3_rect.top + 2), 2)
+        elif self.checkbox3_checked:
+            pygame.draw.line(self.window, (0,0,0), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), (checkbox3_rect.right - 2, checkbox3_rect.top + 2), 2)
+            pygame.draw.line(self.window, (0,0,0), (checkbox3_rect.x + 2, checkbox3_rect.centery), (checkbox3_rect.centerx, checkbox3_rect.bottom - 2), 2)
+        
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.x + 2, checkbox2_rect.centery), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox2_rect.centerx, checkbox2_rect.bottom - 2), (checkbox2_rect.right - 2, checkbox2_rect.top + 2), 2)
+
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.x + 2, checkbox1_rect.centery), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), 2)
+            pygame.draw.line(self.window, (255, 255, 255), (checkbox1_rect.centerx, checkbox1_rect.bottom - 2), (checkbox1_rect.right - 2, checkbox1_rect.top + 2), 2)
+            
         checkbox_title = title_font.render("check the type of game you want to play", True, (0, 0, 0))
         notif_text = notif_font.render("Press escape any time to return to the main menu", True, self.BLACK)
-        label1 = font.render("AI vs Human", True, (0, 0, 0))
-        label2 = font.render("AI vs AI", True, (0, 0, 0))
+        label1 = font.render("Human vs Human", True, (0, 0, 0))
+        label2 = font.render("AI vs Human", True, (0, 0, 0))
+        label3 = font.render("AI vs AI", True, (0, 0, 0))
         self.window.blit(checkbox_title, (50, 50))
         self.window.blit(notif_text, (50,55 + checkbox_title.get_height()))
         self.window.blit(label1, (checkbox1_rect.right + 10, checkbox1_rect.centery - label1.get_height() // 2))
         self.window.blit(label2, (checkbox2_rect.right + 10, checkbox2_rect.centery - label2.get_height() // 2))
+        self.window.blit(label3, (checkbox3_rect.right + 10, checkbox3_rect.centery - label2.get_height() // 2))
 
-        return checkbox1_rect, checkbox2_rect
+        textbox = pygame.Rect(50, 240, 50, 26)
+        pygame.draw.rect(self.window, (225,225,225), textbox)
+        pygame.draw.rect(self.window, (0,0,0), textbox, 2)
+
+        text_surface = font.render(self.ply_text, True, (0, 0, 0))
+        play_label = font.render("Number of Ply", True, (0, 0, 0))
+        self.window.blit(text_surface, (textbox.x + 5, textbox.y + 5))
+        self.window.blit(play_label, (textbox.right + 10, textbox.centery - play_label.get_height()//2))
+
+        return checkbox1_rect, checkbox2_rect, checkbox3_rect, textbox
 
 
     def draw_game(self):
