@@ -1,3 +1,5 @@
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 from .board import Board
 from .board_utils import BoardUtils as utils, BoardConstants as constants
@@ -65,8 +67,8 @@ class Chess:
         self.window = pygame.display.set_mode(self.WINDOW_SIZE)
         pygame.display.set_caption("Knightmare")
 
-        self.checkbox1_checked = True
-        self.checkbox2_checked = False
+        self.checkbox1_checked = False
+        self.checkbox2_checked = True
         self.checkbox3_checked = False
         self.checkbox4_checked = True  # use evaluation functions
 
@@ -96,7 +98,7 @@ class Chess:
                         self.game_state = "start_menu"
 
                 if self.game_state == "start_menu":
-                    start_button, options_button, quit_button = self.draw_start_menu()
+                    start_button, options_button, instructions_button, quit_button = self.draw_start_menu()
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_position = pygame.mouse.get_pos()
                         if start_button.collidepoint(mouse_position):
@@ -108,6 +110,9 @@ class Chess:
                         if options_button.collidepoint(mouse_position):
                             self.game_state = "options_menu"
                             self.window.fill(self.WHITE)
+                        if instructions_button.collidepoint(mouse_position):
+                            self.window.fill(self.WHITE)
+                            self.game_state = "instructions"
 
                 elif self.game_state == "options_menu":
                     check1_rect, check2_rect, check3_rect, check4_rect, textbox = self.draw_options_menu()
@@ -141,6 +146,8 @@ class Chess:
                             if 0 < value < 10:
                                 self.ply_text += event.unicode
                                 self.ply_value = value
+                elif self.game_state == "instructions":
+                    self.draw_instructions()
 
                 elif self.game_state == "game":
                     # https://github.com/pygame/pygame/issues/2011
@@ -206,6 +213,7 @@ class Chess:
                     # pygame.display.update()
                     # pygame.event.pump()
                     # pygame.time.delay(1000)
+                    self.draw_game()
 
                 elif self.game_state == "over":
                     self.draw_game()
@@ -226,6 +234,8 @@ class Chess:
             "Press escape any time to return to this menu", True, self.BLACK)
         start_text = option_font.render("Start", True, self.BLACK)
         options_text = option_font.render("Options", True, self.BLACK)
+        instructions_text = option_font.render(
+            "Instructions", True, self.BLACK)
         quit_text = option_font.render("Quit", True, self.BLACK)
 
         # Get the dimensions of the text objects
@@ -233,6 +243,7 @@ class Chess:
         notif_text_rect = notif_text.get_rect()
         start_text_rect = start_text.get_rect()
         options_text_rect = options_text.get_rect()
+        instructions_text_rect = instructions_text.get_rect()
         quit_text_rect = quit_text.get_rect()
 
         # Set the positions of the text objects
@@ -240,8 +251,9 @@ class Chess:
         notif_text_rect.center = (
             self.WINDOW_SIZE[0] // 2, 55 + title_text.get_height())
         start_text_rect.center = (self.WINDOW_SIZE[0] // 2, 150)
-        options_text_rect.center = (self.WINDOW_SIZE[0] // 2, 250)
-        quit_text_rect.center = (self.WINDOW_SIZE[0] // 2, 350)
+        options_text_rect.center = (self.WINDOW_SIZE[0] // 2, 225)
+        instructions_text_rect.center = (self.WINDOW_SIZE[0] // 2, 300)
+        quit_text_rect.center = (self.WINDOW_SIZE[0] // 2, 375)
 
         self.window.fill(self.WHITE)
 
@@ -250,9 +262,30 @@ class Chess:
         self.window.blit(notif_text, notif_text_rect)
         self.window.blit(start_text, start_text_rect)
         self.window.blit(options_text, options_text_rect)
+        self.window.blit(instructions_text, instructions_text_rect)
         self.window.blit(quit_text, quit_text_rect)
 
-        return start_text_rect, options_text_rect, quit_text_rect
+        return start_text_rect, options_text_rect, instructions_text_rect, quit_text_rect
+
+    def draw_instructions(self):
+        title_font = pygame.font.SysFont(None, 40)
+        notif_font = pygame.font.SysFont(None, 20)
+
+        title_text = title_font.render("Instructions", True, self.BLACK)
+        notif_text = notif_font.render(
+            "Press escape any time to return to the main menu", True, self.BLACK)
+
+        self.window.blit(
+            title_text, (self.WINDOW_SIZE[0] // 2 - title_text.get_width()//2, 25))
+        self.window.blit(
+            notif_text, (self.WINDOW_SIZE[0] // 2 - notif_text.get_width()//2, 50))
+
+        instructions_string = "Use options to toggle between the following game types: \n1) Human vs Human - this allows two humans to play against each other\n2) Human vs AI - this pits white (human) vs black (the AI)\n3) AI vs AI - this pits two AIs against each other (buggy)\n\n\nThis chess engine is in beta, so there are some known bugs:\n1) depending on the OS running the game, AI vs AI may be rendered very slowly\n2) minimizing the screen will freeze rendering despite game continuation\nsee: https://github.com/pygame/pygame/issues/2011\n3) when playing human vs AI, the game will momentarily freeze before the AI makes a move. This is the AI loading.\n4) AI vs AI will occasionally freeze while the game continues in the background. This is a pygames threading issue that we have not figured out how to resolve yet. Instead, use the console version of the game, which is automatically AI vs AI."
+        instructions_rect = pygame.Rect((20, 100, 400, 350))
+        rendered_text = render_textrect(
+            instructions_string, notif_font, instructions_rect, self.BLACK, self.WHITE)
+        if rendered_text:
+            self.window.blit(rendered_text, instructions_rect.topleft)
 
     def draw_options_menu(self):
         title_font = pygame.font.SysFont(None, 25)
@@ -346,12 +379,14 @@ class Chess:
 
         text_surface = font.render(self.ply_text, True, (0, 0, 0))
         ply_label = font.render("Number of Ply", True, (0, 0, 0))
-        evaluate_label = font.render("Use Evaluation Heuristics", True, (0, 0, 0))
-        
+        evaluate_label = font.render(
+            "Use Evaluation Heuristics", True, (0, 0, 0))
+
         self.window.blit(text_surface, (textbox.x + 5, textbox.y + 5))
         self.window.blit(ply_label, (textbox.right + 10,
                          textbox.centery - ply_label.get_height()//2))
-        self.window.blit(evaluate_label, (checkbox4_rect.right + 10, checkbox4_rect.centery - evaluate_label.get_height()//2))
+        self.window.blit(evaluate_label, (checkbox4_rect.right + 10,
+                         checkbox4_rect.centery - evaluate_label.get_height()//2))
 
         return checkbox1_rect, checkbox2_rect, checkbox3_rect, checkbox4_rect, textbox
 
@@ -460,3 +495,93 @@ class Chess:
         # this fills the entire surface
         highlight_surface.fill((173, 216, 230, 150))
         self.window.blit(highlight_surface, (left, top))
+
+
+# taken from https://www.pygame.org/pcr/text_rect/index.php
+    """Returns a surface containing the passed text string, reformatted
+    to fit within the given rect, word-wrapping as necessary. The text
+    will be anti-aliased.
+
+    Takes the following arguments:
+
+    string - the text you wish to render. \n begins a new line.
+    font - a Font object
+    rect - a rectstyle giving the size of the surface requested.
+    text_color - a three-byte tuple of the rgb value of the
+                 text color. ex (0, 0, 0) = BLACK
+    background_color - a three-byte tuple of the rgb value of the surface.
+    justification - 0 (default) left-justified
+                    1 horizontally centered
+                    2 right-justified
+
+    Returns the following values:
+
+    Success - a surface object with the text rendered onto it.
+    Failure - raises a TextRectException if the text won't fit onto the surface.
+    """
+
+
+def render_textrect(string, font, rect, text_color, background_color, justification=0):
+    final_lines = []
+
+    requested_lines = string.splitlines()
+
+    # Create a series of lines that will fit on the provided
+    # rectangle.
+
+    for requested_line in requested_lines:
+        if font.size(requested_line)[0] > rect.width:
+            words = requested_line.split(' ')
+            # if any of our words are too long to fit, return.
+            for word in words:
+                if font.size(word)[0] >= rect.width:
+                    raise TextRectException(
+                        "The word " + word + " is too long to fit in the rect passed.")
+            # Start a new line
+            accumulated_line = ""
+            for word in words:
+                test_line = accumulated_line + word + " "
+                # Build the line while the words fit.
+                if font.size(test_line)[0] < rect.width:
+                    accumulated_line = test_line
+                else:
+                    final_lines.append(accumulated_line)
+                    accumulated_line = word + " "
+            final_lines.append(accumulated_line)
+        else:
+            final_lines.append(requested_line)
+
+    # Let's try to write the text out on the surface.
+
+    surface = pygame.Surface(rect.size)
+    surface.fill(background_color)
+
+    accumulated_height = 0
+    for line in final_lines:
+        if accumulated_height + font.size(line)[1] >= rect.height:
+            raise TextRectException(
+                "Once word-wrapped, the text string was too tall to fit in the rect.")
+        if line != "":
+            tempsurface = font.render(line, 1, text_color)
+            if justification == 0:
+                surface.blit(tempsurface, (0, accumulated_height))
+            elif justification == 1:
+                surface.blit(
+                    tempsurface, ((rect.width - tempsurface.get_width()) / 2, accumulated_height))
+            elif justification == 2:
+                surface.blit(tempsurface, (rect.width -
+                             tempsurface.get_width(), accumulated_height))
+            else:
+                raise TextRectException(
+                    "Invalid justification argument: " + str(justification))
+        accumulated_height += font.size(line)[1]
+
+    return surface
+
+
+class TextRectException:
+    def __init__(self, message=None):
+        self.message = message
+
+    def __str__(self):
+        return self.message
