@@ -123,6 +123,8 @@ class Board:
         
         self.get_king_shelter(constants.WHITE)
         self.get_king_shelter(constants.BLACK)
+
+        self.num_moves = 0
          
     
     '''
@@ -273,6 +275,8 @@ class Board:
     '''
 
     def move_piece(self, from_square, to_square):
+        if self.num_moves >= 200:
+            return 2
         # get pieces
         to_piece = self.get_piece(to_square)
         from_piece = self.get_piece(from_square)
@@ -310,11 +314,11 @@ class Board:
             self.get_king_shelter(constants.BLACK)
         elif (from_piece == constants.WHITE_KING):
             self.get_king_shelter(constants.WHITE)
-            
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
-        return self.move_generator._in_mate(king)
+        v = int(self.move_generator._in_mate(king))
+        return v
 
     '''
         undo the last move made
@@ -414,7 +418,7 @@ class Board:
             enemy_color = constants.BLACK
         else:
             enemy_color = constants.WHITE
-            
+        board_development = self.board_development
         # get all moves, for use in evaluation functions
         all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
         for i in range (0,64):
@@ -423,7 +427,7 @@ class Board:
                 moves = self.get_moves(square)
                 piece = self.get_piece(i)
                 all_moves[piece].append((square,moves))     
-        
+        self.board_development = board_development
         # 1) Get initial piece scores
         opening = False
         middle = False
@@ -837,14 +841,12 @@ class Board:
         for index in knight_indexes:
             if not self.board_development & 1 << index:
                 minor_pieces_developed += 1
-        
+
         for index in bishop_indexes:
             if not self.board_development & 1 << index:
                 minor_pieces_developed += 1
-
         if self.last_move[0] == queen and minor_pieces_developed < 2:
             evaluate_value -= 0.5
-            print('test')
         elif self.last_move[0] == rook and minor_pieces_developed < 2:
             evaluate_value -= 0.5
         if self.last_move[0] == knight:
