@@ -132,7 +132,7 @@ class MoveGenerator:
         is_king_in_check = self._in_check(king_index, king_index)
         
         if is_king_in_check[0]:
-            move_board &= is_king_in_check[1]    
+            move_board &= is_king_in_check[0]    
         else:
             is_piece_pinned = self._is_pinned(index)
             if is_piece_pinned[1]:

@@ -319,8 +319,8 @@ class Board:
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
-        v = int(self.move_generator._in_mate(king))
-        return v
+        return int(self.move_generator._in_mate(king))
+        
 
     '''
         undo the last move made
