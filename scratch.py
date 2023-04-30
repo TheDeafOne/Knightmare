@@ -121,9 +121,17 @@ def minor_piece_dev_test():
     board.move_piece('b1','c3')
     print(board.get_score(constants.WHITE,None))
 
+def king_check_bug_tests():
+    board = Board()
+    board.set_piece(constants.EMPTY,'e7')
+    print(board.move_piece('d2','d7'))
+    print(board.get_board_string())
+    moves = board.get_moves('d8')
+    print(utils.bin_to_string(moves))
+
 
 if __name__ == "__main__":
-    test_minimax()
+    # test_minimax()
 
     # duplicate_king_glitch()
     # print_initial_board()
@@ -133,4 +141,6 @@ if __name__ == "__main__":
     # testing_enable_moves()
     # get_endgame_king_eval()
     # minor_piece_dev_test()
+    king_check_bug_tests()
+
 
