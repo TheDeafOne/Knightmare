@@ -9,7 +9,8 @@ def test_minimax():
 
     minimax = MiniMax()
 
-    for i in range(40):
+    for i in range(100):
+        print('move',i)
         start = datetime.datetime.now()
         if (i % 2 == 0):
             next_move = minimax.get_next_move(board, constants.WHITE)
@@ -26,6 +27,7 @@ def test_minimax():
             print('success')
         if board.check_piece(utils.square_to_index('d8'), constants.BLACK):
             print('success')
+    print(board.get_board_string())
 
 
 def test_misc():
@@ -108,9 +110,20 @@ def testing_enable_moves():
 
     print(board.get_board_string())
 
+def get_endgame_king_eval():
+    board = Board()
+    board.move_piece('e8','e4')
+    print(board.get_endgame_points(constants.BLACK))
+    print(board.get_board_string())
+
+def minor_piece_dev_test():
+    board = Board()
+    board.move_piece('b1','c3')
+    print(board.get_score(constants.WHITE,None))
+
 
 if __name__ == "__main__":
-    test_minimax()
+    # test_minimax()
 
     # duplicate_king_glitch()
     # print_initial_board()
@@ -118,3 +131,5 @@ if __name__ == "__main__":
     # development_order_evaluation_test()
     # get_focal_point()
     # testing_enable_moves()
+    # get_endgame_king_eval()
+    minor_piece_dev_test()
