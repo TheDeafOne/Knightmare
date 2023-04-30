@@ -15,18 +15,23 @@ class Evaluations():
 
         get_mobility_score(all_moves, color)
             Gets board score based on the free spaces accessible by a color's pieces
+            returns floating point number representing the score
             
         get_position_score(color)
             Gets board score based on the position of a color's pieces
+            returns floating point number representing the score
             
         get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
             Gets board score based on a color's pieces ability to attack enemy pieces
+            returns floating point number representing the score
+            
+        get_defensive_potential(color, queen, rook, bishop, knight, pawn)
+            Gets board score based on a color's pieces ability to defend each other
+            returns floating point number representing the score
             
         get_king_security(color)
             Gets board score based on quantity and type of pieces occupying the king's shelter region
-            
-        get_king_shelter(color)
-            Gets integer representations of a color's king shelter regions
+            returns floating point number representing the score
             
         get_endgame_points(color)
 
@@ -34,6 +39,149 @@ class Evaluations():
     
     def __init__(self, board):
         self.board = board
+        
+    '''
+        Gets the score of the current board from a given color's perspective based on evaluation functions and base point strengths. Piece
+        strengths are scaled according to the board's position state, and pawn strength is scaled according to the boards game state.
+        
+        Game states are defined as follows:
+            Opening - overall board strength is between 45 and 60
+            Middlegame - overall board strength is between 30 and 60
+            Endgame - overall board strength is between 0 and 30
+            
+        Position states for the board are defined as follows:
+            closed position - 13 to 16 pawns on the board
+            semi-closed position - 9 to 12 pawns on the board
+            semi-open position - 5 to 8 pawns on the board
+            open position - 0 to 4 pawns on the board
+            
+        This method also calls all other evaluation functions
+        
+        PARAMS
+        color: the color from whose perspective we are scoring the board
+        winning_board: integer, where 1 indicates this board is a winning board (checkmate), and 2 indicates a stalemate (>max allowable moves)
+        
+        RETURNS
+        score of the current board based on evaluation functions
+    '''
+    def get_score(self, color, winning_board):
+        board_development = self.board.board_development
+        # get all moves for every piece as a dictionary, for use in evaluation functions
+        all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
+        for i in range (0,64):
+            if (self.board.board & (1<<i)):
+                square = utils.index_to_square(i)
+                moves = self.board.get_moves(square)
+                piece = self.board.get_piece(i)
+                all_moves[piece].append((square,moves))     
+        self.board.board_development = board_development
+        
+        # Get initial piece scores and the current game state
+        opening = False
+        middle = False
+        endgame = False
+        
+        # base point values
+        queen = 9.0
+        rook = 4.5
+        knight = 3.0
+        bishop = 3.0
+        pawn = 1.0
+        king = 100.0 
+        
+        # count pawns and pieces for grading base values
+        if (color == constants.WHITE):
+            pawn_count = self.board.white_pawns.bit_count()
+        else:
+            pawn_count = self.board.black_pawns.bit_count()
+
+        # count total board piece strength
+        overall_piece_strength = bishop*self.board.white_bishops.bit_count() +  \
+            rook*self.board.white_rooks.bit_count() + \
+            knight*self.board.white_knights.bit_count() + \
+            queen*self.board.white_queens.bit_count() + \
+            king*self.board.white_king.bit_count() + \
+            bishop*self.board.black_bishops.bit_count() +  \
+            rook*self.board.black_rooks.bit_count() + \
+            knight*self.board.black_knights.bit_count() + \
+            queen*self.board.black_queens.bit_count() + \
+            king*self.board.black_king.bit_count()
+        
+        # find current game state, and scale pawn strength based on overal piece strength
+        if (overall_piece_strength >= 45): # opening
+            middle = True
+            opening = True
+        elif (overall_piece_strength >= 30): # middle game
+            middle = True
+            pawn = pawn * 0.05
+        elif (overall_piece_strength >= 15): # Early endgame
+            endgame = True
+            pawn = pawn * 1.10
+        else:  # late endgame
+            endgame = True
+            pawn = pawn * 1.15
+        
+        # scale piece strengths based on the number of pawns
+        if (pawn_count >= 13): # closed positions
+            queen = 0.95*queen
+            rook = 0.85*rook
+            bishop = bishop*1.05
+            knight = knight*1.15
+        elif (pawn_count >= 9): # semi-closed positions
+            queen = 0.95*queen
+            rook = 0.90*rook
+            bishop = bishop*1.05
+            knight = knight*1.10
+        elif (pawn_count >= 5): # semi-open positions
+            queen = 1.20*queen
+            rook = 1.10*rook
+            bishop = bishop*1.15
+            knight = knight*0.9
+        else: # open positions
+            queen = 1.30*queen
+            rook = 1.10*rook
+            bishop = bishop*1.20
+            knight = knight*0.85
+            
+        score_mod = 0.0 # add to the returned score based on various evaluation functions
+        
+        # check evaluation functions: 
+        if (winning_board): score_mod += 200.0   
+        if opening:
+            score_mod += self.get_focal_points(color, all_moves)
+            score_mod += self.get_development_order_points(color)
+        score_mod += self.get_mobility_score(all_moves,color)
+        score_mod += self.get_position_score(color)
+        score_mod += self.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
+        score_mod += self.get_king_security(color)
+        score_mod += self.get_endgame_points(color)
+        score_mod += self.get_defensive_potential(color, queen, rook, bishop, knight, pawn)
+        
+        score_mod /= 4 # scale evaluation point assignments, so they don't overpower the base point values 
+        # (base point values give weight to captures)
+
+        # count total white piece strengths
+        white_count = bishop*self.board.white_bishops.bit_count() +  \
+            pawn*self.board.white_pawns.bit_count() + \
+            rook*self.board.white_rooks.bit_count() + \
+            knight*self.board.white_knights.bit_count() + \
+            queen*self.board.white_queens.bit_count() + \
+            king*self.board.white_king.bit_count()
+            
+        # count total black piece strengths
+        black_count = bishop*self.board.black_bishops.bit_count() +  \
+            pawn*self.board.black_pawns.bit_count() + \
+            rook*self.board.black_rooks.bit_count() + \
+            knight*self.board.black_knights.bit_count() + \
+            queen*self.board.black_queens.bit_count() + \
+            king*self.board.black_king.bit_count()
+        
+        # Return score
+        if (color == constants.WHITE):
+            return white_count - black_count + score_mod
+        else:
+            return black_count - white_count + score_mod
+
         
     '''
         TODO: comment
@@ -280,6 +428,67 @@ class Evaluations():
         return attack_potential
     
     '''
+        Evaluates the utility of the current board for a given color based on that its pieces are defended by other pieces.
+        For each defended piece, 1/20 of that piece's strength is added to the score.
+        
+             
+        PARAMS
+        color: the color whose perspective we are evaluating from
+        queen: the piece strength of a queen
+        rook: the piece strength of a rook
+        bishop: the piece strength of a bishop
+        knight: the piece strength of a knight
+        pawn: the piece strength of a pawn
+        
+        RETURNS
+        a number equal to the defensive potential utility score of the given color for the current board
+        
+    '''
+    def get_defensive_potential(self, color, queen, rook, bishop, knight, pawn):
+        defensive_potential = 0 # initialize
+        defended_mask = 0x0000 # this will be a cumulative defensive mask
+        if (color == constants.WHITE):
+            # get an integer mask of the defended pieces
+            for i in range(64):
+                if self.board.white_pieces & (1 << i): # for each white piece
+                    piece = self.board.get_piece(utils.index_to_square(i))
+                    if (piece == constants.WHITE_KING): 
+                        defended_mask |= self.board.white_immediate_shelter # the king can defend any piece in its immediate shelter
+                    elif (piece == constants.WHITE_PAWN):
+                        index = i
+                        if (index%8>0 and index < 56): defended_mask |= 1 << (index+7) # the pawn can defend the diagonals in its direction of advance
+                        if (index%8<7 and index < 56): defended_mask |= 1 << (index+9)
+                    else: # use get_moves with is_swapped set to True, so it gets the squares a piece defends rather than attacks
+                        defended_mask |= self.board.get_moves(utils.index_to_square(i),True) 
+            # sum defended piece points, weighted according to piece strength
+            defensive_potential += queen/20*(defended_mask & self.board.white_queens).bit_count() 
+            defensive_potential += rook/20*(defended_mask & self.board.white_rooks).bit_count()
+            defensive_potential += bishop/20*(defended_mask & self.board.white_bishops).bit_count()
+            defensive_potential += knight/20*(defended_mask & self.board.white_knights).bit_count()
+            defensive_potential += pawn/20*(defended_mask & self.board.white_pawns).bit_count()
+        else:
+            # get an integer mask of the defended pieces
+            for i in range(64):
+                if self.board.black_pieces & (1 << i): # for each black piece
+                    piece = self.board.get_piece(utils.index_to_square(i))
+                    if (piece == constants.BLACK_KING):
+                        defended_mask |= self.board.black_immediate_shelter # the king can defend any piece in its immediate shelter
+                    elif (piece == constants.BLACK_PAWN):
+                        index = i
+                        defended_mask = 0x0000
+                        if (index%8>0 and index < 56): defended_mask |= 1 << (index-9) # the pawn can defend the diagonals in its direction of advance
+                        if (index%8<7 and index < 56): defended_mask |= 1 << (index-7)
+                    else: # use get_moves with is_swapped set to True, so it gets the squares a piece defends rather than attacks
+                        defended_mask |= self.board.get_moves(utils.index_to_square(i),True)
+            # sum defended piece points, weighted according to piece strength
+            defensive_potential += queen/20*(defended_mask & self.board.black_queens).bit_count()
+            defensive_potential += rook/20*(defended_mask & self.board.black_rooks).bit_count()
+            defensive_potential += bishop/20*(defended_mask & self.board.black_bishops).bit_count()
+            defensive_potential += knight/20*(defended_mask & self.board.black_knights).bit_count()
+            defensive_potential += pawn/20*(defended_mask & self.board.black_pawns).bit_count()
+        return defensive_potential
+    
+    '''
         Evaluates the utility of the current board for a given color based on the security of that color's king. This method adds points 
         when pieces occupy the sheltering region around the king using the following point scheme:
             +.5 for pawns in the immediate king shelter
@@ -325,131 +534,6 @@ class Evaluations():
                 + 0.25*(full_shelter & self.board.black_knights).bit_count() \
                 + 0.30*(full_shelter & self.board.black_bishops).bit_count()
         return king_security
-    
-    '''
-        Gets an integer representation of the king's shelter regions for a given color, given the king's position and the king's distance to board edges. 
-        The king's shelter is divided into four regions:
-            The immediate shelter consists of the squares adjacent to the king.
-            The diagonal wide shelter consists of diagonals two squares apart from the king.
-            The cross wide shelter consists of the verticals and horizontals two squares apart from the king.
-            The sinuous board wide shelter consists of the curved spaces two squares from the king.
-            
-        PARAMS
-        color: the color whose king this method finds the shelter of
-    '''
-    
-    def get_king_shelter(self, color):        
-        if (color == constants.WHITE):
-            self.board.white_immediate_shelter = 0x0000 # clear integer representations for each shelter region
-            self.board.white_diag_wide_shelter = 0x0000
-            self.board.white_cross_wide_shelter = 0x0000
-            self.board.white_sinu_wide_shelter = 0x0000
-            
-            if (self.board.white_king.bit_count() != 1): # if there is no king, do not attempt to evaluate
-                return
-            
-            index = utils.singleton_board_to_index(self.board.white_king) # get the index of the given color's king
-            if ((index-1)%8<7): # if there is a square left of king
-                self.board.white_immediate_shelter |= 1 << (index-1) # add left square to immediate shelter mask
-                if ((index-2)%8<7): self.board.white_cross_wide_shelter |= 1 << (index-2) # add left left
-            if ((index+1)%8>0): # if the right square right of king
-                self.board.white_immediate_shelter |= 1 << (index+1) # add right
-                if ((index+2)%8>0): self.board.white_cross_wide_shelter |= 1 << (index+2) # add right right
-            if ((index-8)>-1): # check the level below the king
-                self.board.white_immediate_shelter |= 1 << (index-8) # below
-                if ((index-8-1)%8<7):
-                    self.board.white_immediate_shelter |= 1 << (index-8-1) # bottom left corner
-                    if ((index-8-2)%8<7):
-                        self.board.white_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
-                if ((index-8+1)%8>0):
-                    self.board.white_immediate_shelter |= 1 << (index-8+1) # bottom right
-                    if ((index-8+2)%8>0):
-                        self.board.white_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
-            if ((index-16)>-1): # check two levels below the king
-                self.board.white_cross_wide_shelter |= 1 << (index-16) 
-                if ((index-16-1)%8<7): # bottom bottom left
-                    self.board.white_sinu_wide_shelter |= 1 << (index-16-1)
-                    if ((index-16-2)%8<7): # bottom bottom left left
-                        self.board.white_diag_wide_shelter |= 1 << (index-16-2)
-                if ((index-16+1)%8>0): # bottom bottom right
-                    self.board.white_sinu_wide_shelter |= 1 << (index-16+1)
-                    if ((index-16+2)%8>0): # bottom bottom right right
-                        self.board.white_diag_wide_shelter |= 1 << (index-16+2)
-            if ((index+8)<56): # level above king
-                self.board.white_immediate_shelter |= 1 << (index+8)
-                if ((index+8-1)%8<7):
-                    self.board.white_immediate_shelter |= 1 << (index+8-1) # top left corner
-                    if ((index+8-2)%8<7):
-                        self.board.white_sinu_wide_shelter |= 1 << (index+8-2) # top left left
-                if ((index+8+1)%8>0):
-                    self.board.white_immediate_shelter |= 1 << (index+8+1) # top right
-                    if ((index+8+2)%8>0):
-                        self.board.white_sinu_wide_shelter |= 1 << (index+8+2) # top right right
-            if ((index+16)<56): # two levels above king
-                self.board.white_cross_wide_shelter |= 1 << (index+16) 
-                if ((index+16-1)%8<7): # top top left
-                    self.board.white_sinu_wide_shelter |= 1 << (index+16-1)
-                    if ((index+16-2)%8<7): # top top left left
-                        self.board.white_diag_wide_shelter |= 1 << (index+16-2)
-                if ((index+16+1)%8>0): # top top right
-                    self.board.white_sinu_wide_shelter |= 1 << (index+16+1)
-                    if ((index+16+2)%8>0): # top top right right
-                        self.board.white_diag_wide_shelter |= 1 << (index+16+2)
-        else:
-            self.board.black_immediate_shelter = 0x0000 # clear integer representations of the shelter
-            self.board.black_diag_wide_shelter = 0x0000
-            self.board.black_cross_wide_shelter = 0x0000
-            self.board.black_sinu_wide_shelter = 0x0000
-            if (self.board.black_king.bit_count() != 1): # if there is no king, do not attempt to eval
-                return
-            
-            index = utils.singleton_board_to_index(self.board.black_king) # get index of the king
-            if ((index-1)%8<7): # check left of king
-                self.board.black_immediate_shelter |= 1 << (index-1) # left 
-                if ((index-2)%8<7): self.board.black_cross_wide_shelter |= 1 << (index-2) # left left
-            if ((index+1)%8>0): # check right of king
-                self.board.black_immediate_shelter |= 1 << (index+1) # right
-                if ((index+2)%8>0): self.board.black_cross_wide_shelter |= 1 << (index+2) # right right
-            if ((index-8)>-1): # level below king
-                self.board.black_immediate_shelter |= 1 << (index-8)
-                if ((index-8-1)%8<7):
-                    self.board.black_immediate_shelter |= 1 << (index-8-1) # bottom left corner
-                    if ((index-8-2)%8<7):
-                        self.board.black_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
-                if ((index-8+1)%8>0):
-                    self.board.black_immediate_shelter |= 1 << (index-8+1) # bottom right
-                    if ((index-8+2)%8>0):
-                        self.board.black_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
-            if ((index-16)>-1): # two levels below king
-                self.board.black_cross_wide_shelter |= 1 << (index-16) 
-                if ((index-16-1)%8<7): # bottom bottom left
-                    self.board.black_sinu_wide_shelter |= 1 << (index-16-1)
-                    if ((index-16-2)%8<7): # bottom bottom left left
-                        self.board.black_diag_wide_shelter |= 1 << (index-16-2)
-                if ((index-16+1)%8>0): # bottom bottom right
-                    self.board.black_sinu_wide_shelter |= 1 << (index-16+1)
-                    if ((index-16+2)%8>0): # bottom bottom right right
-                        self.board.black_diag_wide_shelter |= 1 << (index-16+2)
-            if ((index+8)<56): # level above king
-                self.board.black_immediate_shelter |= 1 << (index+8)
-                if ((index+8-1)%8<7):
-                    self.board.black_immediate_shelter |= 1 << (index+8-1) # top left corner
-                    if ((index+8-2)%8<7):
-                        self.board.black_sinu_wide_shelter |= 1 << (index+8-2) # top left left
-                if ((index+8+1)%8>0):
-                    self.board.black_immediate_shelter |= 1 << (index+8+1) # top right
-                    if ((index+8+2)%8>0):
-                        self.board.black_sinu_wide_shelter |= 1 << (index+8+2) # top right right
-            if ((index+16)<56): # two levels above king
-                self.board.black_cross_wide_shelter |= 1 << (index+16) 
-                if ((index+16-1)%8<7): # top top left
-                    self.board.black_sinu_wide_shelter |= 1 << (index+16-1)
-                    if ((index+16-2)%8<7): # top top left left
-                        self.board.black_diag_wide_shelter |= 1 << (index+16-2)
-                if ((index+16+1)%8>0): # top top right
-                    self.board.black_sinu_wide_shelter |= 1 << (index+16+1)
-                    if ((index+16+2)%8>0): # top top right right
-                        self.board.black_diag_wide_shelter |= 1 << (index+16+2)
     
     '''
         Evaluates board utility for a certain color in the endgame by checking the mobility of that colors king and the king's position.

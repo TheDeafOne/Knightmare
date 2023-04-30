@@ -41,9 +41,11 @@ class Board:
         black_queens: a 64 bit integer whose bits represent the location of the black queens
         black_king: a 64 bit integer whose bits represent the location of the black king
 
-
-
         METHODS
+        
+        check_piece(square,color)
+            checks whether there is a piece of the given color in a specific square
+            returns boolean
 
         set_pieces(piece, square)
             sets the given square to the given piece
@@ -66,6 +68,14 @@ class Board:
 
         get_board_string()
             returns the current state of the board as a string. Any highlighted moves on the highlighted moves board will be represented
+            
+        get_score(color,is_winning_board)
+            gets the score of the current board from the perspective of the given color
+            returns floating point number representing the score
+            
+        get_king_shelter(color)
+            Updates integer representations of a color's king shelter regions
+            returns None
     '''
 
     def __init__(self):
@@ -123,19 +133,21 @@ class Board:
         self.black_cross_wide_shelter = 0x0000
         self.black_sinu_wide_shelter = 0x0000   
         
-        self.evaluations.get_king_shelter(constants.WHITE)
-        self.evaluations.get_king_shelter(constants.BLACK)
+        self.get_king_shelter(constants.WHITE)
+        self.get_king_shelter(constants.BLACK)
 
         self.num_moves = 0
          
     
     '''
-        checks whether there is a piece in the given square with the given color
+        Checks whether there is a piece in the given square with the given color
 
         PARAMS
         index: index of the square to check
         color: color to check for
 
+        RETURNS
+        boolean indicating whether there is a piece in the given square with the given color
     '''
     def check_piece(self, index, color):
         if (color == constants.WHITE):
@@ -314,9 +326,9 @@ class Board:
                 self.set_piece(constants.BLACK_QUEEN, to_square)
 
         if (from_piece == constants.BLACK_KING):
-            self.evaluations.get_king_shelter(constants.BLACK)
+            self.get_king_shelter(constants.BLACK)
         elif (from_piece == constants.WHITE_KING):
-            self.evaluations.get_king_shelter(constants.WHITE)
+            self.get_king_shelter(constants.WHITE)
         king = self.white_king
         if self.get_piece_color(from_piece) == self.white_pieces:
             king = self.black_king
@@ -417,127 +429,138 @@ class Board:
 
 
     '''
-        gets the board's evaluation score
+        Gets the score of the current board from a given color's perspective based on evaluation functions from the Evaluations helper
+        
+        PARAMS
+        color: the color from whose perspective we are scoring the board
+        winning_board: integer, where 1 indicates this board is a winning board (checkmate), and 2 indicates a stalemate (>max allowable moves)
+        
     '''
-    def get_score(self, color, winning_board):
-        if (color == constants.WHITE):
-            enemy_color = constants.BLACK
-        else:
-            enemy_color = constants.WHITE
-        board_development = self.board_development
-        # get all moves, for use in evaluation functions
-        all_moves = {piece_type:[] for piece_type in constants.ALL_PIECE_TYPES}
-        for i in range (0,64):
-            if (self.board & (1<<i)):
-                square = utils.index_to_square(i)
-                moves = self.get_moves(square)
-                piece = self.get_piece(i)
-                all_moves[piece].append((square,moves))     
-        self.board_development = board_development
-        # 1) Get initial piece scores
-        opening = False
-        middle = False
-        endgame = False
-        
-        queen = 9.0
-        rook = 4.5
-        knight = 3.0
-        bishop = 3.0
-        pawn = 1.0
-        king = 100.0 
-        
-        if (color == constants.WHITE):
-            pawn_count = self.white_pawns.bit_count()
-        else:
-            pawn_count = self.black_pawns.bit_count()
-
-        overall_piece_strength = bishop*self.white_bishops.bit_count() +  \
-            rook*self.white_rooks.bit_count() + \
-            knight*self.white_knights.bit_count() + \
-            queen*self.white_queens.bit_count() + \
-            king*self.white_king.bit_count() + \
-            bishop*self.black_bishops.bit_count() +  \
-            rook*self.black_rooks.bit_count() + \
-            knight*self.black_knights.bit_count() + \
-            queen*self.black_queens.bit_count() + \
-            king*self.black_king.bit_count()
-        
-        if (overall_piece_strength >= 45): # opening
-            middle = True
-            opening = True
-        elif (overall_piece_strength >= 30): # middle game
-            middle = True
-            pawn = pawn * 0.05
-        elif (overall_piece_strength >= 15): # Early endgame
-            endgame = True
-            pawn = pawn * 1.10
-        else:  # late endgame
-            endgame = True
-            pawn = pawn * 1.15
-        
-        if (pawn_count >= 13): # closed positions
-            queen = 0.95*queen
-            rook = 0.85*rook
-            bishop = bishop*1.05
-            knight = knight*1.15
-        elif (pawn_count >= 9): # semi-closed positions
-            queen = 0.95*queen
-            rook = 0.90*rook
-            bishop = bishop*1.05
-            knight = knight*1.10
-        elif (pawn_count >= 5): # semi-open positions
-            queen = 1.20*queen
-            rook = 1.10*rook
-            bishop = bishop*1.15
-            knight = knight*0.9
-        else: # open positions
-            queen = 1.30*queen
-            rook = 1.10*rook
-            bishop = bishop*1.20
-            knight = knight*0.85
-            
-        # TODO: add extra conditions for openning/middlegame/endgame (see doc), and put result in score_mod
-        score_mod = 0.0 # add to the returned score based on various conditions
-        
-        if (winning_board): score_mod += 200.0   
-        if opening:
-            score_mod += self.evaluations.get_focal_points(color, all_moves)
-            score_mod += self.evaluations.get_development_order_points(color)
-        score_mod += self.evaluations.get_mobility_score(all_moves,color)
-        score_mod += self.evaluations.get_position_score(color)
-        score_mod += self.evaluations.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
-        score_mod += self.evaluations.get_king_security(color)
-        score_mod += self.evaluations.get_endgame_points(color)
-        
-        score_mod /= 2
-
-        white_count = bishop*self.white_bishops.bit_count() +  \
-            pawn*self.white_pawns.bit_count() + \
-            rook*self.white_rooks.bit_count() + \
-            knight*self.white_knights.bit_count() + \
-            queen*self.white_queens.bit_count() + \
-            king*self.white_king.bit_count()
-            
-        black_count = bishop*self.black_bishops.bit_count() +  \
-            pawn*self.black_pawns.bit_count() + \
-            rook*self.black_rooks.bit_count() + \
-            knight*self.black_knights.bit_count() + \
-            queen*self.black_queens.bit_count() + \
-            king*self.black_king.bit_count()
-        
-        # Return score
-        if (color == constants.WHITE):
-            return white_count - black_count + score_mod
-        else:
-            return black_count - white_count + score_mod
-
-        
-
-        
-
-        
-
-
-
-
     
+    def get_score(self, color, winning_board):
+        return self.evaluations.get_score(color, winning_board)
+        
+    '''
+        Updates the integer representation of the king's shelter regions for a given color, given the king's position and the king's distance to board edges. 
+        The king's shelter is divided into four regions:
+            The immediate shelter consists of the squares adjacent to the king.
+            The diagonal wide shelter consists of diagonals two squares apart from the king.
+            The cross wide shelter consists of the verticals and horizontals two squares apart from the king.
+            The sinuous board wide shelter consists of the curved spaces two squares from the king.
+            
+        PARAMS
+        color: the color whose king this method finds the shelter of
+    '''
+    
+    def get_king_shelter(self, color):        
+        if (color == constants.WHITE):
+            self.white_immediate_shelter = 0x0000 # clear integer representations for each shelter region
+            self.white_diag_wide_shelter = 0x0000
+            self.white_cross_wide_shelter = 0x0000
+            self.white_sinu_wide_shelter = 0x0000
+            
+            if (self.white_king.bit_count() != 1): # if there is no king, do not attempt to evaluate
+                return
+            
+            index = utils.singleton_board_to_index(self.white_king) # get the index of the given color's king
+            if ((index-1)%8<7): # if there is a square left of king
+                self.white_immediate_shelter |= 1 << (index-1) # add left square to immediate shelter mask
+                if ((index-2)%8<7): self.white_cross_wide_shelter |= 1 << (index-2) # add left left
+            if ((index+1)%8>0): # if the right square right of king
+                self.white_immediate_shelter |= 1 << (index+1) # add right
+                if ((index+2)%8>0): self.white_cross_wide_shelter |= 1 << (index+2) # add right right
+            if ((index-8)>-1): # check the level below the king
+                self.white_immediate_shelter |= 1 << (index-8) # below
+                if ((index-8-1)%8<7):
+                    self.white_immediate_shelter |= 1 << (index-8-1) # bottom left corner
+                    if ((index-8-2)%8<7):
+                        self.white_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
+                if ((index-8+1)%8>0):
+                    self.white_immediate_shelter |= 1 << (index-8+1) # bottom right
+                    if ((index-8+2)%8>0):
+                        self.white_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
+            if ((index-16)>-1): # check two levels below the king
+                self.white_cross_wide_shelter |= 1 << (index-16) 
+                if ((index-16-1)%8<7): # bottom bottom left
+                    self.white_sinu_wide_shelter |= 1 << (index-16-1)
+                    if ((index-16-2)%8<7): # bottom bottom left left
+                        self.white_diag_wide_shelter |= 1 << (index-16-2)
+                if ((index-16+1)%8>0): # bottom bottom right
+                    self.white_sinu_wide_shelter |= 1 << (index-16+1)
+                    if ((index-16+2)%8>0): # bottom bottom right right
+                        self.white_diag_wide_shelter |= 1 << (index-16+2)
+            if ((index+8)<56): # level above king
+                self.white_immediate_shelter |= 1 << (index+8)
+                if ((index+8-1)%8<7):
+                    self.white_immediate_shelter |= 1 << (index+8-1) # top left corner
+                    if ((index+8-2)%8<7):
+                        self.white_sinu_wide_shelter |= 1 << (index+8-2) # top left left
+                if ((index+8+1)%8>0):
+                    self.white_immediate_shelter |= 1 << (index+8+1) # top right
+                    if ((index+8+2)%8>0):
+                        self.white_sinu_wide_shelter |= 1 << (index+8+2) # top right right
+            if ((index+16)<56): # two levels above king
+                self.white_cross_wide_shelter |= 1 << (index+16) 
+                if ((index+16-1)%8<7): # top top left
+                    self.white_sinu_wide_shelter |= 1 << (index+16-1)
+                    if ((index+16-2)%8<7): # top top left left
+                        self.white_diag_wide_shelter |= 1 << (index+16-2)
+                if ((index+16+1)%8>0): # top top right
+                    self.white_sinu_wide_shelter |= 1 << (index+16+1)
+                    if ((index+16+2)%8>0): # top top right right
+                        self.white_diag_wide_shelter |= 1 << (index+16+2)
+        else:
+            self.black_immediate_shelter = 0x0000 # clear integer representations of the shelter
+            self.black_diag_wide_shelter = 0x0000
+            self.black_cross_wide_shelter = 0x0000
+            self.black_sinu_wide_shelter = 0x0000
+            if (self.black_king.bit_count() != 1): # if there is no king, do not attempt to eval
+                return
+            
+            index = utils.singleton_board_to_index(self.black_king) # get index of the king
+            if ((index-1)%8<7): # check left of king
+                self.black_immediate_shelter |= 1 << (index-1) # left 
+                if ((index-2)%8<7): self.black_cross_wide_shelter |= 1 << (index-2) # left left
+            if ((index+1)%8>0): # check right of king
+                self.black_immediate_shelter |= 1 << (index+1) # right
+                if ((index+2)%8>0): self.black_cross_wide_shelter |= 1 << (index+2) # right right
+            if ((index-8)>-1): # level below king
+                self.black_immediate_shelter |= 1 << (index-8)
+                if ((index-8-1)%8<7):
+                    self.black_immediate_shelter |= 1 << (index-8-1) # bottom left corner
+                    if ((index-8-2)%8<7):
+                        self.black_sinu_wide_shelter |= 1 << (index-8-2) # bottom left left
+                if ((index-8+1)%8>0):
+                    self.black_immediate_shelter |= 1 << (index-8+1) # bottom right
+                    if ((index-8+2)%8>0):
+                        self.black_sinu_wide_shelter |= 1 << (index-8+2) # bottom right right
+            if ((index-16)>-1): # two levels below king
+                self.black_cross_wide_shelter |= 1 << (index-16) 
+                if ((index-16-1)%8<7): # bottom bottom left
+                    self.black_sinu_wide_shelter |= 1 << (index-16-1)
+                    if ((index-16-2)%8<7): # bottom bottom left left
+                        self.black_diag_wide_shelter |= 1 << (index-16-2)
+                if ((index-16+1)%8>0): # bottom bottom right
+                    self.black_sinu_wide_shelter |= 1 << (index-16+1)
+                    if ((index-16+2)%8>0): # bottom bottom right right
+                        self.black_diag_wide_shelter |= 1 << (index-16+2)
+            if ((index+8)<56): # level above king
+                self.black_immediate_shelter |= 1 << (index+8)
+                if ((index+8-1)%8<7):
+                    self.black_immediate_shelter |= 1 << (index+8-1) # top left corner
+                    if ((index+8-2)%8<7):
+                        self.black_sinu_wide_shelter |= 1 << (index+8-2) # top left left
+                if ((index+8+1)%8>0):
+                    self.black_immediate_shelter |= 1 << (index+8+1) # top right
+                    if ((index+8+2)%8>0):
+                        self.black_sinu_wide_shelter |= 1 << (index+8+2) # top right right
+            if ((index+16)<56): # two levels above king
+                self.black_cross_wide_shelter |= 1 << (index+16) 
+                if ((index+16-1)%8<7): # top top left
+                    self.black_sinu_wide_shelter |= 1 << (index+16-1)
+                    if ((index+16-2)%8<7): # top top left left
+                        self.black_diag_wide_shelter |= 1 << (index+16-2)
+                if ((index+16+1)%8>0): # top top right
+                    self.black_sinu_wide_shelter |= 1 << (index+16+1)
+                    if ((index+16+2)%8>0): # top top right right
+                        self.black_diag_wide_shelter |= 1 << (index+16+2)

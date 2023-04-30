@@ -122,8 +122,9 @@ def get_endgame_king_eval():
 
 def minor_piece_dev_test():
     board = Board()
-    board.move_piece('b1', 'c3')
-    print(board.get_score(constants.WHITE, None))
+    board.move_piece('b1','c3')
+    print(board.get_score(constants.WHITE,None))
+    print(board.get_board_string())
 
 
 def king_check_bug_tests():
