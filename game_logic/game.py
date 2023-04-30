@@ -126,7 +126,6 @@ class Chess:
                             self.checkbox2_checked = False
                             self.checkbox3_checked = True
                         elif textbox.collidepoint(mouse_position):
-                            print('hey',self.focused_on_ply_textbox)
                             self.focused_on_ply_textbox = True
 
                     if event.type == pygame.KEYDOWN and self.focused_on_ply_textbox:
