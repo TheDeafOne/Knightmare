@@ -129,22 +129,44 @@ class MoveGenerator:
         elif piece == constants.WHITE_QUEEN or piece == constants.BLACK_QUEEN:
             move_board = self._get_queen_moves(index)
         elif piece == constants.WHITE_KING or piece == constants.BLACK_KING:
-            return self._get_king_moves(index)
+            move_board = self._get_king_moves(index)
         
         king_index = utils.singleton_board_to_index(self.board.white_king if self.player == self.board.white_pieces else self.board.black_king)
 
-        # 0 is attacking piece, 1 is line of attack
-        # 0 is attacking piece, 1 is the line of attack
+        # 0 is attacking piece, 1 is searched areas
         is_king_in_check = self._in_check(king_index, king_index)
-        
+       
         
         if is_king_in_check[0]:
-            t_indexes = utils.board_to_indexes(is_king_in_check[0])
-            if len(t_indexes) > 1:
+            # print('king in check')
+            # print('attacking piece')
+            # print(utils.bin_to_string(is_king_in_check[0]))
+            # print('searched area')
+            # print(utils.bin_to_string(is_king_in_check[1]))
+            
+            attacking_indexes = utils.board_to_indexes(is_king_in_check[0])
+            if len(attacking_indexes) > 1:
                 return 0
-            t_piece = self.board.get_piece(t_indexes[0])
-            t_moves = self.piece_move_map[t_piece](t_indexes[0])
-            move_board &= is_king_in_check[1] & (is_king_in_check[0] | t_moves)
+            attacking_piece = self.board.get_piece(attacking_indexes[0])
+
+            self.swap_players()
+            print(piece)
+            attacking_moves = self.piece_move_map[attacking_piece](attacking_indexes[0])[1]
+            feasible_moves = (attacking_moves | is_king_in_check[0]) & move_board[0]
+            feasible_move_indexes = utils.board_to_indexes(feasible_moves)
+            actual_moves = 0
+            print(feasible_move_indexes)
+            for feasible_move in feasible_move_indexes:
+                other_piece = self.board.get_piece(feasible_move)
+                self.board.set_piece(constants.EMPTY,index)
+                self.board.set_piece(piece,feasible_move)
+                print(self.board.get_board_string())
+                if not self._in_check(king_index, king_index)[0]:
+                    actual_moves |= 1 << feasible_move
+                self.board.set_piece(other_piece,feasible_move)
+                self.board.set_piece(piece, index)
+
+            move_board = actual_moves, 0
             
         else:
             is_piece_pinned = self._is_pinned(index)
@@ -152,7 +174,7 @@ class MoveGenerator:
                 move_board |= is_piece_pinned[0]
                 move_board &= is_piece_pinned[1]
             
-        return move_board
+        return move_board[0]
 
     '''
         gets all the possible moves a pawn at the given index could make
@@ -169,6 +191,7 @@ class MoveGenerator:
         moves = 0
         mask = 1 << index
         col = index % 8
+        line_of_attack = 0
         # check if piece is white
         if self.opponent == self.board.black_pieces:
             # Check one square forward
@@ -182,8 +205,10 @@ class MoveGenerator:
             # Check diagonal captures
             if col < 7 and self.board.black_pieces & (mask << 9):
                 moves |= mask << 9
+                line_of_attack |= mask << 9
             if col > 0 and self.board.black_pieces & (mask << 7):
                 moves |= mask << 7
+                line_of_attack |= mask << 7
 
             # Check en passant capture
             if self.board.en_passant_board & mask:
@@ -203,8 +228,10 @@ class MoveGenerator:
             # Check diagonal captures
             if col < 7 and self.board.white_pieces & (mask >> 7):
                 moves |= mask >> 7
+                line_of_attack |= mask >> 7
             if col > 0 and self.board.white_pieces & (mask >> 9):
                 moves |= mask >> 9
+                line_of_attack |= mask >> 9
 
             # Check en passant capture
             if self.board.en_passant_board & mask:
@@ -212,7 +239,7 @@ class MoveGenerator:
                     moves |= mask << 1
                 if col > 0 and self.board.white_pieces & (mask >> 1):
                     moves |= mask >> 1
-        return moves
+        return moves, line_of_attack
 
     '''
         Generates all the possible moves for a knight in a given square
@@ -238,6 +265,7 @@ class MoveGenerator:
         moves = 0
         mask = 1 << index
         col, row = index % 8, index // 8
+        line_of_attack = 0
 
         # right L shape moves
         # validate column moveable position
@@ -246,6 +274,7 @@ class MoveGenerator:
             if row > 0 and not mask >> 6 & self.player:
                 # right down
                 moves |= mask >> 6
+                
             if row < 7 and not mask << 10 & self.player:
                 # right up
                 moves |= mask << 10
@@ -277,7 +306,7 @@ class MoveGenerator:
                 # up right
                 moves |= mask << 17
 
-        return moves
+        return moves, moves & self.opponent
 
     '''
         gets all the possible moves a bishop at the given index could make
@@ -292,53 +321,66 @@ class MoveGenerator:
     def _get_bishop_moves(self, index):
         col, row = index % 8, index // 8
         moves = 0
+        line_of_attack = 0
 
         # Check northeast moves
+        directional_board = 0
         for i in range(1, min(8 - row, 8 - col)):
             new_index = index + i * 9
             if self._is_empty(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
             elif self._is_opponent(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
+                line_of_attack |= directional_board
                 # stopped by an opponent
                 break
             else:
                 # stopped by a player piece
                 break
+        moves |= directional_board
 
+        directional_board = 0
         # Check northwest moves
         for i in range(1, min(8 - row, col + 1)):
             new_index = index + i * 7
             if self._is_empty(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
             elif self._is_opponent(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
+                line_of_attack |= directional_board
                 break
             else:
                 break
+        moves |= directional_board
 
+        directional_board = 0
         # Check southeast moves
         for i in range(1, min(row + 1, 8 - col)):
             new_index = index - i * 7
             if self._is_empty(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
             elif self._is_opponent(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
+                line_of_attack |= directional_board
                 break
             else:
                 break
+        moves |= directional_board
 
+        directional_board = 0
         # Check southwest moves
         for i in range(1, min(row + 1, col + 1)):
             new_index = index - i * 9
             if self._is_empty(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
             elif self._is_opponent(new_index):
-                moves |= 1 << new_index
+                directional_board |= 1 << new_index
+                line_of_attack |= directional_board
                 break
             else:
                 break
-        return moves
+        moves |= directional_board
+        return moves, line_of_attack
 
     '''
         gets all the possible moves a rook at the given index could make
@@ -352,48 +394,62 @@ class MoveGenerator:
 
     def _get_rook_moves(self, index):
         moves = 0
+        line_of_attack = 0
+
+        directional_board = 0
         # Get all possible moves to the right
         for i in range(index + 1, index // 8 * 8 + 8):
             if self._is_empty(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
             elif self._is_opponent(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
+                line_of_attack |= directional_board
                 # stopped by opponent
                 break
             else:
                 # stopped by player piece
                 break
+        moves |= directional_board
+
+        directional_board = 0
         # Get all possible moves to the left
         for i in range(index - 1, index // 8 * 8 - 1, -1):
             if self._is_empty(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
             elif self._is_opponent(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
+                line_of_attack |= directional_board
                 break
             else:
                 break
+        moves |= directional_board
 
+        directional_board = 0
         # Get all possible moves going up
         for i in range(index + 8, 64, 8):
             if self._is_empty(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
             elif self._is_opponent(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
+                line_of_attack = directional_board
                 break
             else:
                 break
+        moves |= directional_board
 
+        directional_board = 0
         # Get all possible moves going down
         for i in range(index - 8, -1, -8):
             if self._is_empty(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
             elif self._is_opponent(i):
-                moves |= 1 << i
+                directional_board |= 1 << i
+                line_of_attack |= directional_board
                 break
             else:
                 break
-
-        return moves
+        moves |= directional_board
+        return moves, line_of_attack
 
     '''
         gets all the possible moves a queen at the given index could make
@@ -406,9 +462,10 @@ class MoveGenerator:
     '''
 
     def _get_queen_moves(self, index):
-        moves = self._get_bishop_moves(index)
-        moves |= self._get_rook_moves(index)
-        return moves
+        b_moves, b_line_of_attack = self._get_bishop_moves(index)
+        r_moves, r_line_of_attack =  self._get_rook_moves(index)
+
+        return b_moves | r_moves, b_line_of_attack | r_line_of_attack
 
     '''
         gets all the possible moves a king at the given index could make
@@ -435,7 +492,7 @@ class MoveGenerator:
             if bottom_index >= 0 and not bottom_mask & self.player and not self._in_check(bottom_index, index)[0]:
                 moves |= 1 << bottom_index
         self.board.set_piece(tmp_king, index)
-        return moves
+        return moves, moves & self.opponent
    
 
     '''
@@ -476,35 +533,50 @@ class MoveGenerator:
         
         checking_pieces = 0
         test_checked_piece = 0
-
         search_field = 0
-        
+        line_of_attack = 0
+
         # determine what moves would cause a check, if any
         pawn_moves = self._get_pawn_moves(index)
+        if pawn_moves[1] & pawns:
+            line_of_attack |= pawn_moves[1]
+        pawn_moves = pawn_moves[0]
         test_checked_piece = pawns & pawn_moves
         if test_checked_piece:
             search_field |= pawn_moves
             checking_pieces |= test_checked_piece
         
         knight_moves = self._get_knight_moves(index)
+        if knight_moves[1] & knights:
+            line_of_attack |= knight_moves[1]
+        knight_moves = knight_moves[0]
         test_checked_piece = knights & knight_moves
         if test_checked_piece:
             search_field |= knight_moves
             checking_pieces |= test_checked_piece
         
         bishop_moves = self._get_bishop_moves(index)
+        if bishop_moves[1] & bishops:
+            line_of_attack |= bishop_moves[1]
+        bishop_moves = bishop_moves[0]
         test_checked_piece = bishops & bishop_moves
         if test_checked_piece:
             search_field |= bishop_moves
             checking_pieces |= test_checked_piece
         
         rook_moves = self._get_rook_moves(index)
+        if rook_moves[1] & rooks:
+            line_of_attack |= rook_moves[1]
+        rook_moves = rook_moves[0]
         test_checked_piece = rooks & rook_moves
-        
         if test_checked_piece:
             search_field |= rook_moves
             checking_pieces |= test_checked_piece
+
         queen_moves = self._get_queen_moves(index)
+        if queen_moves[1] & queens:
+            line_of_attack |= queen_moves[1]
+        queen_moves = queen_moves[0]
         test_checked_piece = queens & queen_moves
         if test_checked_piece:
             search_field |= queen_moves
@@ -530,10 +602,10 @@ class MoveGenerator:
         if test_checked_piece:
             search_field |= tentative_king_positions
             checking_pieces |= test_checked_piece
-
+        
         
         # true if king in check, false otherwise
-        return checking_pieces, search_field
+        return checking_pieces, search_field, line_of_attack
     
     '''
         this function assumes no moves are available to the given king
@@ -559,19 +631,19 @@ class MoveGenerator:
         if attacking and (attacking & (attacking - 1)) > 0:
             return True
     
-        tmp = self.player
-        self.player = self.opponent
-        self.opponent = tmp
+        self.swap_players()
 
         attacking_index = utils.singleton_board_to_index(attacking)
         attacker_check = self._in_check(attacking_index, attacking_index)
 
 
-        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index).upper()](attacking_index)
-        line_of_attack = attacker_moves & king_check[1]
+        attacker_moves = self.piece_move_map[self.board.get_piece(attacking_index)](attacking_index)
+        line_of_attack = attacker_moves[1] & king_check[1]
         # line_of_attack |= king_board
 
-        blocking_pieces = utils.board_to_indexes(self.opponent)
+        self.swap_players()
+
+        blocking_pieces = utils.board_to_indexes(self.player)
         blocking_pieces.remove(king_index)
         for piece in blocking_pieces:
             blocking_moves = self.generate_moves(piece)
@@ -584,6 +656,12 @@ class MoveGenerator:
         
         # check if the checking piece cant be captured
         # check if the line of attack can't be blocked
+
+    def swap_players(self):
+        tmp = self.player
+        self.player = self.opponent
+        self.opponent = tmp
+
     
     def _is_pinned(self, square):
         index = square

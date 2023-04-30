@@ -128,11 +128,13 @@ def minor_piece_dev_test():
 
 def king_check_bug_tests():
     board = Board()
-    board.set_piece(constants.EMPTY, 'e7')
-    print(board.move_piece('d2', 'd7'))
+    board.set_piece(constants.EMPTY, 'f1')
+    board.set_piece(constants.EMPTY, 'g1')
+    board.set_piece(constants.EMPTY, 'e2')
+    print(board.move_piece('d8', 'f2'))
     print(board.get_board_string())
-    moves = board.get_moves('b8')
-    print(utils.bin_to_string(moves))
+    moves = board.get_moves('e1')
+    # print(utils.bin_to_string(moves))
 
 def king_block_bug_tests():
     board = Board()
@@ -141,7 +143,7 @@ def king_block_bug_tests():
     board.move_piece('a2','a4')
     board.move_piece('d8','h4')
     print(board.get_board_string())
-    print(utils.bin_to_string(board.get_moves('g2')))
+    print(utils.bin_to_string(board.get_moves('d1')))
 if __name__ == "__main__":
     # test_minimax()
 
@@ -153,5 +155,6 @@ if __name__ == "__main__":
     # testing_enable_moves()
     # get_endgame_king_eval()
     # # minor_piece_dev_test()
-    # king_check_bug_tests()
-    king_block_bug_tests()
+    king_check_bug_tests()
+    # king_block_bug_tests()
+

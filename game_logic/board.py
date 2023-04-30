@@ -231,7 +231,8 @@ class Board:
         index = square
         if type(square) == str:
             index = utils.square_to_index(square)
-
+        if index < 0:
+            return constants.EMPTY
         # make mask representation of index
         mask = 1 << index
 
