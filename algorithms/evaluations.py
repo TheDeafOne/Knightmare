@@ -22,6 +22,9 @@ class Evaluations():
         get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
             Gets board score based on a color's pieces ability to attack enemy pieces
             
+        get_defensive_potential(color, queen, rook, bishop, knight, pawn)
+            Gets board score based on a color's pieces ability to defend each other
+            
         get_king_security(color)
             Gets board score based on quantity and type of pieces occupying the king's shelter region
             
@@ -36,7 +39,7 @@ class Evaluations():
         self.board = board
         
     '''
-        TODO: comment
+        
         
     '''
     
@@ -278,6 +281,67 @@ class Evaluations():
                         attack_potential += pawn/20*(each_piece_move[1] & self.board.white_pieces & self.board.white_immediate_shelter).bit_count()
                         attack_potential += pawn/20 * 2/3 * (each_piece_move[1] & self.board.white_pieces & wide_shelter).bit_count()
         return attack_potential
+    
+    '''
+        Evaluates the utility of the current board for a given color based on that its pieces are defended by other pieces.
+        For each defended piece, 1/20 of that piece's strength is added to the score.
+        
+             
+        PARAMS
+        color: the color whose perspective we are evaluating from
+        queen: the piece strength of a queen
+        rook: the piece strength of a rook
+        bishop: the piece strength of a bishop
+        knight: the piece strength of a knight
+        pawn: the piece strength of a pawn
+        
+        RETURNS
+        a number equal to the defensive potential utility score of the given color for the current board
+        
+    '''
+    def get_defensive_potential(self, color, queen, rook, bishop, knight, pawn):
+        defensive_potential = 0 # initialize
+        defended_mask = 0x0000 # this will be a cumulative defensive mask
+        if (color == constants.WHITE):
+            # get an integer mask of the defended pieces
+            for i in range(64):
+                if self.board.white_pieces & (1 << i): # for each white piece
+                    piece = self.board.get_piece(utils.index_to_square(i))
+                    if (piece == constants.WHITE_KING): 
+                        defended_mask |= self.board.white_immediate_shelter # the king can defend any piece in its immediate shelter
+                    elif (piece == constants.WHITE_PAWN):
+                        index = i
+                        if (index%8>0 and index < 56): defended_mask |= 1 << (index+7) # the pawn can defend the diagonals in its direction of advance
+                        if (index%8<7 and index < 56): defended_mask |= 1 << (index+9)
+                    else: # use get_moves with is_swapped set to True, so it gets the squares a piece defends rather than attacks
+                        defended_mask |= self.board.get_moves(utils.index_to_square(i),True) 
+            # sum defended piece points, weighted according to piece strength
+            defensive_potential += queen/20*(defended_mask & self.board.white_queens).bit_count() 
+            defensive_potential += rook/20*(defended_mask & self.board.white_rooks).bit_count()
+            defensive_potential += bishop/20*(defended_mask & self.board.white_bishops).bit_count()
+            defensive_potential += knight/20*(defended_mask & self.board.white_knights).bit_count()
+            defensive_potential += pawn/20*(defended_mask & self.board.white_pawns).bit_count()
+        else:
+            # get an integer mask of the defended pieces
+            for i in range(64):
+                if self.board.black_pieces & (1 << i): # for each black piece
+                    piece = self.board.get_piece(utils.index_to_square(i))
+                    if (piece == constants.BLACK_KING):
+                        defended_mask |= self.board.black_immediate_shelter # the king can defend any piece in its immediate shelter
+                    elif (piece == constants.BLACK_PAWN):
+                        index = i
+                        defended_mask = 0x0000
+                        if (index%8>0 and index < 56): defended_mask |= 1 << (index-9) # the pawn can defend the diagonals in its direction of advance
+                        if (index%8<7 and index < 56): defended_mask |= 1 << (index-7)
+                    else: # use get_moves with is_swapped set to True, so it gets the squares a piece defends rather than attacks
+                        defended_mask |= self.board.get_moves(utils.index_to_square(i),True)
+            # sum defended piece points, weighted according to piece strength
+            defensive_potential += queen/20*(defended_mask & self.board.black_queens).bit_count()
+            defensive_potential += rook/20*(defended_mask & self.board.black_rooks).bit_count()
+            defensive_potential += bishop/20*(defended_mask & self.board.black_bishops).bit_count()
+            defensive_potential += knight/20*(defended_mask & self.board.black_knights).bit_count()
+            defensive_potential += pawn/20*(defended_mask & self.board.black_pawns).bit_count()
+        return defensive_potential
     
     '''
         Evaluates the utility of the current board for a given color based on the security of that color's king. This method adds points 

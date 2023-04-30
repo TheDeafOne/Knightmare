@@ -504,8 +504,9 @@ class Board:
         score_mod += self.evaluations.get_attacking_potential(all_moves, color, queen, rook, bishop, knight, pawn)
         score_mod += self.evaluations.get_king_security(color)
         score_mod += self.evaluations.get_endgame_points(color)
+        score_mod += self.evaluations.get_defensive_potential(color, queen, rook, bishop, knight, pawn)
         
-        score_mod /= 2
+        score_mod /= 4
 
         white_count = bishop*self.white_bishops.bit_count() +  \
             pawn*self.white_pawns.bit_count() + \

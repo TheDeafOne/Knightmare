@@ -127,6 +127,8 @@ class MoveGenerator:
         
         king_index = utils.singleton_board_to_index(self.board.white_king if self.player == self.board.white_pieces else self.board.black_king)
 
+        if (is_swapped): return move_board
+            
         # 0 is attacking piece, 1 is line of attack
         # 0 is attacking piece, 1 is the line of attack
         is_king_in_check = self._in_check(king_index, king_index)
