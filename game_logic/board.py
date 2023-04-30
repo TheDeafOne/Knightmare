@@ -297,14 +297,7 @@ class Board:
         from_piece = self.get_piece(from_square)
         if from_piece == constants.EMPTY and (to_piece == constants.WHITE_KING or to_piece == constants.BLACK_KING):
             return 1
-            # print('erorr')
-            # print(self.get_board_string())
-            # print(from_piece, from_square, to_piece, to_square)
-            # print('white king:')
-            # print(utils.bin_to_string(self.white_king))
-            # print('black king:')
-            # print(utils.bin_to_string(self.black_king))
-
+          
         # clear to cell
         self.set_piece(constants.EMPTY, to_square)
 
