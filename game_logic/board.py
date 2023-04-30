@@ -41,8 +41,6 @@ class Board:
         black_queens: a 64 bit integer whose bits represent the location of the black queens
         black_king: a 64 bit integer whose bits represent the location of the black king
 
-
-
         METHODS
         
         check_piece(square,color)
