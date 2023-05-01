@@ -1,3 +1,7 @@
+import os, sys
+if getattr(sys, 'frozen', False):
+    os.chdir(sys._MEIPASS)
+
 from game_logic.game import Chess
 from game_logic.board import Board
 from game_logic.board_utils import BoardConstants as constants, BoardUtils as utils
@@ -99,7 +103,8 @@ def run():
     print('Welcome to Knightmare')
     while True:
         play_type = input(
-            'Do you want to play in console or with a gui (beta)? "c" for console, "g" for gui:')
+            'Do you want to play in console or with a gui (beta)?\nNote that if you are running the executable version, the gui will not work.\n "c" for console, "g" for gui:')
+        
         if play_type == 'g':
             print('loading...')
             Chess().play()
