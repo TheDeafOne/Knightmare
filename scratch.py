@@ -166,6 +166,7 @@ if __name__ == "__main__":
     # get_endgame_king_eval()
     # # minor_piece_dev_test()
     
-    king_check_bug_tests()
-    king_block_bug_tests()
-    king_block_bug_tests2()
+    # king_check_bug_tests()
+    # king_block_bug_tests()
+    # king_block_bug_tests2()
+    pass

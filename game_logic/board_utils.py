@@ -45,7 +45,9 @@ class BoardUtils:
 
     def board_to_indexes(integer_board):
         return [i for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
-
+    
+    def is_valid_square(square):
+        return square[0] in 'abcdefgh' and square[1] in '12345678'
 
 class BoardConstants:
     # numeric constants

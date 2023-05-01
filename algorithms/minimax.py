@@ -28,8 +28,8 @@ class MiniMax():
         get_min(board,color,is_terminal_board)
             returns the score of the given board for a minimizing player, which will equal -get_max with the same parameters
     '''
-    def __init__(self):
-        self.MAX_DEPTH = 2 # ply depth is MAX_DEPTH + 1
+    def __init__(self, depth=2):
+        self.MAX_DEPTH = depth # ply depth is MAX_DEPTH + 1
         self.next_move = tuple()
         self.use_eval_functions = True
 
