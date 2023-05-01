@@ -17,4 +17,9 @@ We identify feasible moves of a given piece through a co-dependent class [move_g
 ### Evaluation Functions
 While Minimax is the foundation of how the chess AI works, it is useless without heuristic evaluation functions for given boards. Each board has a "goodness" value that helps Minimax determine whether to keep that given board state, prune it, or continue down the search tree. This value is found by using common, intuitive heuristics for a board, such as how many pieces are in the center, where the king is, the order pieces are developed in, and many more. While there are hundreds of such heuristics we implement a handful which we consider the most valuable. These are documented in [evaluations.py](algorithms/evaluations.py).
 ## Playing the AI
+### Installation and running
+clone the project with ```git clone https://github.com/TheDeafOne/Knightmare.git```
+install pygames ```python -m pip install pygames```
+run main with ```python .\main.py``` or ```python3 .\main``` depending on your version.
+### Navigating Playthrough
 The AI has an Elo of roughly 400-500, due to the simplistic implementation and small number of heuristic evaluation functions. To play it, run [main.py](main.py). This will prompt you to either play on the console or the gui version. Note that the gui version of the game has some bugs due to pygames threading limitations. More information is provided in the instructions portion of the gui version. Additionally, note that because the AI is as minimalistic as possible, each move will take an average of 15 seconds.
