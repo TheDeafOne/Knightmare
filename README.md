@@ -16,6 +16,10 @@ We identify feasible moves of a given piece through a co-dependent class [move_g
 [Minimax](https://en.wikipedia.org/wiki/Minimax) is a well-documented recursive adversarial search algorithm. It is one of the more popular algorithms used when developing chess engines, largely due to the benefits it provides when also implementing [alpha-beta pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning). 
 ### Evaluation Functions
 While Minimax is the foundation of how most chess AI works, it is useless without heuristic evaluation functions for given boards. Each board has a "goodness" value that helps Minimax determine whether to keep that given board state, prune it, or continue down the search tree. This value is found by using common, intuitive heuristics for a board, such as how many pieces are in the center, where the king is, the order in which pieces are developed, and many more. While there are hundreds of such heuristics, we implement a handful that we consider the most valuable. These are documented in [evaluations.py](algorithms/evaluations.py).
+
+## Paper
+Despite the simple implementation, we found that certain heuristics produced more valuable board evaluations. These our explored in our [research paper](using_minimax_in_chess.pdf).
+
 ## Playing the AI
 ### Installation and running
 clone the project with ```git clone https://github.com/TheDeafOne/Knightmare.git```
@@ -24,5 +28,3 @@ run main with ```python .\main.py```
 ### Navigating Playthrough
 The AI has an Elo of roughly 600, due to the simplistic implementation and small number of heuristic evaluation functions. To play it, run [main.py](main.py). This will prompt you to either play on the console or the GUI version. Note that the GUI version of the game has some issues with lag due to PyGames threading limitations. More information is provided in the instructions portion of the GUI version.
 
-## Paper
-Despite the simple implementation, we found that certain heuristics produced more valuable board evaluations. These our explored in our [research paper](using_minimax_in_chess.pdf).
