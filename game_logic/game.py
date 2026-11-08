@@ -66,6 +66,7 @@ class Chess:
         pygame.init()
         self.window = pygame.display.set_mode(self.WINDOW_SIZE)
         pygame.display.set_caption("Knightmare")
+        pygame.time.set_timer(pygame.USEREVENT, 100)
 
         self.checkbox1_checked = False
         self.checkbox2_checked = True
@@ -154,6 +155,7 @@ class Chess:
                     if not pygame.display.get_active():
                         continue
                     self.draw_game()
+                    self.minimax.MAX_DEPTH = self.ply_value
                     move = []
                     if self.checkbox2_checked and self.current_player_color == constants.BLACK:
                         move = self.minimax.get_next_move(
@@ -191,7 +193,7 @@ class Chess:
                         print(self.board.get_piece(move[1]), move[0], move[1])
                         if is_mate:
                             self.game_state = "over"
-                            self.winner = self.current_player_color
+                            self.winner = "draw" if is_mate == 2 else self.current_player_color
                         # switch players
                         if self.current_player_color == constants.WHITE:
                             self.current_player_color = constants.BLACK
@@ -453,10 +455,10 @@ class Chess:
 
     def draw_winner(self):
         winner_font = pygame.font.SysFont("Arial", 50, bold=True)
-        winner = "black" if self.winner == constants.BLACK else "white"
+        winner = "draw" if self.winner == "draw" else "black" if self.winner == constants.BLACK else "white"
         text_color = (0, 0, 0) if winner == "black" else (255, 255, 255)
 
-        winner_label = winner_font.render(winner + " won", True, text_color)
+        winner_label = winner_font.render("Draw" if winner == "draw" else winner + " won", True, text_color)
         text_width, text_height = winner_label.get_width(), winner_label.get_height()
         outline_surface = pygame.Surface((text_width + 2, text_height*1.5))
         outline_surface.fill(pygame.Color(
@@ -476,8 +478,8 @@ class Chess:
         x, y = position
         x -= self.SQUARE_SIZE//2
         # if the click was outside the board, ignore it
-        if x < 0 or x > self.WINDOW_SIZE[0] or \
-                y < 0 or y > (self.WINDOW_SIZE[0] - self.SQUARE_SIZE/2):
+        if x < 0 or x >= self.SQUARE_SIZE * 8 or \
+                y < 0 or y >= self.SQUARE_SIZE * 8:
             return None
 
         row = y // self.SQUARE_SIZE

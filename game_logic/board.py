@@ -1,6 +1,7 @@
 from .board_utils import BoardUtils as utils, BoardConstants as constants
 from .move_generator import MoveGenerator
 from algorithms.evaluations import Evaluations
+from . import rules
 
 
 class Board:
@@ -137,6 +138,11 @@ class Board:
         self.get_king_shelter(constants.BLACK)
 
         self.num_moves = 0
+        self.side_to_move = constants.WHITE
+        self.castling_rights = 'KQkq'
+        self.halfmove_clock = 0
+        self._history = []
+        self._positions = [self._position_key()]
          
     
     '''
@@ -164,69 +170,22 @@ class Board:
     '''
 
     def set_piece(self, piece, square):
-        # conver given square to index
-        index = square
-        if type(square) == str:
-            index = utils.square_to_index(square)
-
-        # set piece location in temporary mask
+        index = utils.square_to_index(square) if isinstance(square, str) else square
         mask = 1 << index
-
-        self.board |= mask
+        self.board &= ~mask
+        self.white_pieces &= ~mask
+        self.black_pieces &= ~mask
+        for name in self._piece_fields.values():
+            setattr(self, name, getattr(self, name) & ~mask)
+        if piece != constants.EMPTY:
+            name = self._piece_fields[piece]
+            setattr(self, name, getattr(self, name) | mask)
+            self.board |= mask
+            if piece.isupper():
+                self.white_pieces |= mask
+            else:
+                self.black_pieces |= mask
         self.board_development &= ~mask
-        # check if piece location corresponds with any of the sub-boards
-        # set the cell to be empty
-        if piece == constants.EMPTY:
-            # update main board
-            self.board &= ~mask
-
-            # update white pieces
-            self.white_pieces &= ~mask
-            self.white_pawns &= ~mask
-            self.white_rooks &= ~mask
-            self.white_knights &= ~mask
-            self.white_bishops &= ~mask
-            self.white_king &= ~mask
-            self.white_queens &= ~mask
-
-            # update black pieces
-            self.black_pieces &= ~mask
-            self.black_pawns &= ~mask
-            self.black_rooks &= ~mask
-            self.black_knights &= ~mask
-            self.black_bishops &= ~mask
-            self.black_king &= ~mask
-            self.black_queens &= ~mask
-        # set the cell to be a white piece
-        elif piece.isupper():
-            self.white_pieces |= mask
-            if piece == constants.WHITE_KING:
-                self.white_king |= mask
-            elif piece == constants.WHITE_QUEEN:
-                self.white_queens |= mask
-            elif piece == constants.WHITE_ROOK:
-                self.white_rooks |= mask
-            elif piece == constants.WHITE_BISHOP:
-                self.white_bishops |= mask
-            elif piece == constants.WHITE_KNIGHT:
-                self.white_knights |= mask
-            elif piece == constants.WHITE_PAWN:
-                self.white_pawns |= mask
-        # set the cell to be a black piece
-        else:
-            self.black_pieces |= mask
-            if piece == constants.BLACK_KING:
-                self.black_king |= mask
-            elif piece == constants.BLACK_QUEEN:
-                self.black_queens |= mask
-            elif piece == constants.BLACK_ROOK:
-                self.black_rooks |= mask
-            elif piece == constants.BLACK_BISHOP:
-                self.black_bishops |= mask
-            elif piece == constants.BLACK_KNIGHT:
-                self.black_knights |= mask
-            elif piece == constants.BLACK_PAWN:
-                self.black_pawns |= mask
 
     '''
         gets the piece in the given square or index
@@ -289,66 +248,101 @@ class Board:
         to_square: an alphanumeric square index indentifying the square to which the moving piece will land
     '''
 
-    def move_piece(self, from_square, to_square):
-        if self.num_moves >= 150:
-            return 2
-        # get pieces
-        to_piece = self.get_piece(to_square)
-        from_piece = self.get_piece(from_square)
-        if from_piece == constants.EMPTY and (to_piece == constants.WHITE_KING or to_piece == constants.BLACK_KING):
-            return 1
-          
-        # clear to cell
-        self.set_piece(constants.EMPTY, to_square)
+    _piece_fields = dict(zip('PNBRQKpnbrqk', (
+        'white_pawns', 'white_knights', 'white_bishops', 'white_rooks', 'white_queens', 'white_king',
+        'black_pawns', 'black_knights', 'black_bishops', 'black_rooks', 'black_queens', 'black_king')))
 
-        # set to cell to piece in from cell
-        self.set_piece(from_piece, to_square)
+    def _snapshot(self):
+        # Copy value state only. Helpers retain their reference to this board.
+        return {key: value[:] if isinstance(value, list) else value
+                for key, value in vars(self).items()
+                if key not in ('move_generator', 'evaluations', '_history')}
 
-        # clear from cell
-        self.set_piece(constants.EMPTY, from_square)
-        
-        self.last_last_moves = self.last_move
-        # save latest move
-        # if self.last_moves[:10] == [(), ('P', 'h2', '-', 'h4'), ('n', 'g8', '-', 'h6'), ('P', 'h4', '-', 'h5'), ('n', 'h6', '-', 'g4'), (), (), (), ('N', 'g1', '-', 'h3'), ('n', 'g4', 'P', 'f2')]:
-        #     print(self.get_board_string())
-        #     print(self.last_moves)
-        #     print()
-        # self.last_moves.append(self.last_move)
+    def _restore(self, state):
+        for key, value in state.items():
+            setattr(self, key, value)
+
+    def _position_key(self):
+        ep = self.en_passant_board
+        if ep:
+            pawns = self.white_pawns if self.side_to_move == 0 else self.black_pawns
+            if not any(self.get_moves(i) & ep for i in utils.board_to_indexes(pawns)):
+                ep = 0
+        return (tuple(getattr(self, field) for field in self._piece_fields.values()),
+                self.side_to_move, self.castling_rights, ep)
+
+    def _apply_move(self, origin, target, promotion='Q'):
+        piece, captured = self.get_piece(origin), self.get_piece(target)
+        color = 0 if piece.isupper() else 1
+        en_passant = (piece.upper() == 'P' and captured == '-'
+                      and bool(self.en_passant_board & (1 << target)))
+        if en_passant:
+            self.set_piece('-', target - (8 if color == 0 else -8))
+        self.set_piece('-', origin)
+        self.set_piece(piece, target)
+        if piece.upper() == 'P' and target // 8 in (0, 7):
+            self.set_piece(promotion.upper() if color == 0 else promotion.lower(), target)
+        if piece.upper() == 'K' and abs(target - origin) == 2:
+            rook_origin = origin + 3 if target > origin else origin - 4
+            rook_target = origin + 1 if target > origin else origin - 1
+            self.set_piece('-', rook_origin)
+            self.set_piece('R' if color == 0 else 'r', rook_target)
+        remove = ''
+        if piece == 'K':
+            remove += 'KQ'
+        if piece == 'k':
+            remove += 'kq'
+        for square, right in ((0, 'Q'), (7, 'K'), (56, 'q'), (63, 'k')):
+            if origin == square or target == square:
+                remove += right
+        self.castling_rights = ''.join(r for r in self.castling_rights if r not in remove)
+        self.en_passant_board = (1 << ((origin + target) // 2)
+                                 if piece.upper() == 'P' and abs(target - origin) == 16 else 0)
+        self.halfmove_clock = 0 if piece.upper() == 'P' or captured != '-' or en_passant else self.halfmove_clock + 1
+        self.side_to_move = 1 - color
+        self.num_moves += 1
+        self.get_king_shelter(constants.WHITE)
+        self.get_king_shelter(constants.BLACK)
+
+    def move_piece(self, from_square, to_square, promotion='Q', evaluate_outcome=True):
+        if promotion.upper() not in 'QRBN':
+            raise ValueError('Promotion must be Q, R, B, or N')
+        origin, target = utils.square_to_index(from_square), utils.square_to_index(to_square)
+        piece = self.get_piece(origin)
+        if piece == '-' or (0 if piece.isupper() else 1) != self.side_to_move:
+            raise ValueError('Move must belong to the side to move')
+        if not self.get_moves(origin) & (1 << target):
+            raise ValueError(f'Illegal move: {from_square}{to_square}')
+        self._history.append(self._snapshot())
+        self.last_last_move = self.last_move
         self.last_moves.append(self.last_move)
-        self.last_move = (from_piece,from_square,to_piece,to_square)
-        
+        self.last_move = (self.get_piece(origin), from_square, self.get_piece(target), to_square)
+        self._apply_move(origin, target, promotion)
+        self._positions.append(self._position_key())
+        return self.outcome(self.side_to_move) if evaluate_outcome else 0
 
-        # pawn check
-        to_index = utils.square_to_index(to_square)
-        from_color = self.get_piece_color(from_piece)
-        if from_piece == constants.WHITE_PAWN or from_piece == constants.BLACK_PAWN:
-            if from_color == self.white_pieces and to_index > 55:
-                self.set_piece(constants.WHITE_QUEEN, to_square)
-            elif to_index < 8:
-                self.set_piece(constants.BLACK_QUEEN, to_square)
-
-        if (from_piece == constants.BLACK_KING):
-            self.get_king_shelter(constants.BLACK)
-        elif (from_piece == constants.WHITE_KING):
-            self.get_king_shelter(constants.WHITE)
-        king = self.white_king
-        if self.get_piece_color(from_piece) == self.white_pieces:
-            king = self.black_king
-  
-        if int(self.move_generator._in_mate(king)) and not self.get_moves(utils.singleton_board_to_index(king)):
-            return 1
+    def outcome(self, color=None):
+        """0: ongoing, 1: side to move is checkmated, 2: draw."""
+        color = self.side_to_move if color is None else color
+        has_move = any(self.get_moves(i) for i in range(64) if self.check_piece(i, color))
+        if not has_move:
+            return 1 if rules.in_check(self, color) else 2
+        if self.halfmove_clock >= 100 or self._positions.count(self._position_key()) >= 3:
+            return 2
+        # Basic dead-material cases; broader dead positions are outside this engine.
+        if not (self.white_pawns | self.black_pawns | self.white_rooks | self.black_rooks
+                | self.white_queens | self.black_queens):
+            if (self.white_knights | self.black_knights | self.white_bishops | self.black_bishops).bit_count() <= 1:
+                return 2
         return 0
-        
 
     '''
         undo the last move made
 
     '''
     def undo_last(self):
-        if len(self.last_move) != 0:
-            self.move_piece(self.last_move[3],self.last_move[1])
-            self.last_move = tuple()
-
+        if self._history:
+            self._restore(self._history.pop())
 
     '''
         gets the moves the piece in the given square can take
@@ -358,7 +352,8 @@ class Board:
     '''
 
     def get_moves(self, square, is_swapped = False):
-        return self.move_generator.generate_moves(square, is_swapped)
+        index = utils.square_to_index(square) if isinstance(square, str) else square
+        return rules.attacks(self, index) if is_swapped else rules.legal_moves(self, index)
     
     '''
         determines the given piece's color
