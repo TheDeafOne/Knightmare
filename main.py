@@ -2,7 +2,6 @@ import os, sys
 if getattr(sys, 'frozen', False):
     os.chdir(sys._MEIPASS)
 
-from game_logic.game import Chess
 from game_logic.board import Board
 from game_logic.board_utils import BoardConstants as constants, BoardUtils as utils
 from algorithms.minimax import MiniMax
@@ -40,10 +39,14 @@ def play_console():
             else:
                 color = constants.BLACK
                 next_move = minimax.get_next_move(board, constants.BLACK)
+            if next_move is None:
+                print('Game over: no legal move or a draw.')
+                break
             print(next_move[0] + " to " + next_move[1] + '\n')
-            if (board.move_piece(next_move[0], next_move[1])):
-                color_string = "white" if color else "black"
-                print(color_string + "won")
+            result = board.move_piece(next_move[0], next_move[1])
+            if result:
+                color_string = 'white' if color == constants.WHITE else 'black'
+                print('Draw' if result == 2 else color_string + ' won')
                 break
             print(board.get_board_string())
     elif game_type == '2':
@@ -60,7 +63,7 @@ def play_console():
                     print()
                     print("not a valid pair")
                     continue
-                move_pair = move_pair.strip().split(',')[:2]
+                move_pair = [square.strip() for square in move_pair.split(',')[:2]]
                 from_square, to_square = move_pair
                 if not (utils.is_valid_square(from_square) and utils.is_valid_square(to_square)):
                     print()
@@ -81,10 +84,10 @@ def play_console():
                 print("loading...")
                 from_square, to_square = minimax.get_next_move(board,constants.BLACK)
 
-            in_check = board.move_piece(from_square, to_square)
-            if in_check:
-                color_string = "black" if color else "white"
-                print(color_string + " won")
+            result = board.move_piece(from_square, to_square)
+            if result:
+                color_string = 'white' if color == constants.WHITE else 'black'
+                print('Draw' if result == 2 else color_string + ' won')
                 break
             print(board.get_board_string())
 
@@ -107,6 +110,7 @@ def run():
         
         if play_type == 'g':
             print('loading...')
+            from game_logic.game import Chess
             Chess().play()
             break
         elif play_type == 'c':

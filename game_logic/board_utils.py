@@ -47,7 +47,7 @@ class BoardUtils:
         return [i for i, cell in enumerate(format(integer_board, '064b')[::-1]) if cell == '1']
     
     def is_valid_square(square):
-        return square[0] in 'abcdefgh' and square[1] in '12345678'
+        return isinstance(square, str) and len(square) == 2 and square[0] in 'abcdefgh' and square[1] in '12345678'
 
 class BoardConstants:
     # numeric constants
@@ -90,8 +90,8 @@ class BoardConstants:
     BLACK_KING_INDEX = 60
 
 
-    WHITE_PIECES = set([WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN])
-    BLACK_PIECES = set([WHITE_KING, BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING])
+    WHITE_PIECES = set([WHITE_PAWN, WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING])
+    BLACK_PIECES = set([BLACK_PAWN, BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING])
     ALL_PIECE_TYPES = WHITE_PIECES.union(BLACK_PIECES)
                           
     # players

@@ -1,0 +1,3 @@
+-r requirements.txt
+chess==1.11.2
+Pillow>=11,<14

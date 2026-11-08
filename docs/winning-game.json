@@ -1,0 +1,345 @@
+{
+  "seed": 7,
+  "depth": 2,
+  "opponent": "uniform random legal moves",
+  "result": "0-1",
+  "plies": 48,
+  "moves": [
+    {
+      "ply": 1,
+      "uci": "d2d3",
+      "san": "d3",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/3P4/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
+      "nodes": null
+    },
+    {
+      "ply": 2,
+      "uci": "e7e5",
+      "san": "e5",
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/8/3P4/PPP1PPPP/RNBQKBNR w KQkq - 0 2",
+      "nodes": 130
+    },
+    {
+      "ply": 3,
+      "uci": "c1e3",
+      "san": "Be3",
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/8/3PB3/PPP1PPPP/RN1QKBNR b KQkq - 1 2",
+      "nodes": null
+    },
+    {
+      "ply": 4,
+      "uci": "f8b4",
+      "san": "Bb4+",
+      "fen": "rnbqk1nr/pppp1ppp/8/4p3/1b6/3PB3/PPP1PPPP/RN1QKBNR w KQkq - 2 3",
+      "nodes": 123
+    },
+    {
+      "ply": 5,
+      "uci": "c2c3",
+      "san": "c3",
+      "fen": "rnbqk1nr/pppp1ppp/8/4p3/1b6/2PPB3/PP2PPPP/RN1QKBNR b KQkq - 0 3",
+      "nodes": null
+    },
+    {
+      "ply": 6,
+      "uci": "b4a5",
+      "san": "Ba5",
+      "fen": "rnbqk1nr/pppp1ppp/8/b3p3/8/2PPB3/PP2PPPP/RN1QKBNR w KQkq - 1 4",
+      "nodes": 99
+    },
+    {
+      "ply": 7,
+      "uci": "h2h4",
+      "san": "h4",
+      "fen": "rnbqk1nr/pppp1ppp/8/b3p3/7P/2PPB3/PP2PPP1/RN1QKBNR b KQkq - 0 4",
+      "nodes": null
+    },
+    {
+      "ply": 8,
+      "uci": "a7a6",
+      "san": "a6",
+      "fen": "rnbqk1nr/1ppp1ppp/p7/b3p3/7P/2PPB3/PP2PPP1/RN1QKBNR w KQkq - 0 5",
+      "nodes": 121
+    },
+    {
+      "ply": 9,
+      "uci": "b1a3",
+      "san": "Na3",
+      "fen": "rnbqk1nr/1ppp1ppp/p7/b3p3/7P/N1PPB3/PP2PPP1/R2QKBNR b KQkq - 1 5",
+      "nodes": null
+    },
+    {
+      "ply": 10,
+      "uci": "d8f6",
+      "san": "Qf6",
+      "fen": "rnb1k1nr/1ppp1ppp/p4q2/b3p3/7P/N1PPB3/PP2PPP1/R2QKBNR w KQkq - 2 6",
+      "nodes": 310
+    },
+    {
+      "ply": 11,
+      "uci": "d1c2",
+      "san": "Qc2",
+      "fen": "rnb1k1nr/1ppp1ppp/p4q2/b3p3/7P/N1PPB3/PPQ1PPP1/R3KBNR b KQkq - 3 6",
+      "nodes": null
+    },
+    {
+      "ply": 12,
+      "uci": "b8c6",
+      "san": "Nc6",
+      "fen": "r1b1k1nr/1ppp1ppp/p1n2q2/b3p3/7P/N1PPB3/PPQ1PPP1/R3KBNR w KQkq - 4 7",
+      "nodes": 326
+    },
+    {
+      "ply": 13,
+      "uci": "e3a7",
+      "san": "Ba7",
+      "fen": "r1b1k1nr/Bppp1ppp/p1n2q2/b3p3/7P/N1PP4/PPQ1PPP1/R3KBNR b KQkq - 5 7",
+      "nodes": null
+    },
+    {
+      "ply": 14,
+      "uci": "a8a7",
+      "san": "Rxa7",
+      "fen": "2b1k1nr/rppp1ppp/p1n2q2/b3p3/7P/N1PP4/PPQ1PPP1/R3KBNR w KQk - 0 8",
+      "nodes": 133
+    },
+    {
+      "ply": 15,
+      "uci": "e1c1",
+      "san": "O-O-O",
+      "fen": "2b1k1nr/rppp1ppp/p1n2q2/b3p3/7P/N1PP4/PPQ1PPP1/2KR1BNR b k - 1 8",
+      "nodes": null
+    },
+    {
+      "ply": 16,
+      "uci": "f6f2",
+      "san": "Qxf2",
+      "fen": "2b1k1nr/rppp1ppp/p1n5/b3p3/7P/N1PP4/PPQ1PqP1/2KR1BNR w k - 0 9",
+      "nodes": 118
+    },
+    {
+      "ply": 17,
+      "uci": "c2d2",
+      "san": "Qd2",
+      "fen": "2b1k1nr/rppp1ppp/p1n5/b3p3/7P/N1PP4/PP1QPqP1/2KR1BNR b k - 1 9",
+      "nodes": null
+    },
+    {
+      "ply": 18,
+      "uci": "d7d5",
+      "san": "d5",
+      "fen": "2b1k1nr/rpp2ppp/p1n5/b2pp3/7P/N1PP4/PP1QPqP1/2KR1BNR w k - 0 10",
+      "nodes": 260
+    },
+    {
+      "ply": 19,
+      "uci": "g2g4",
+      "san": "g4",
+      "fen": "2b1k1nr/rpp2ppp/p1n5/b2pp3/6PP/N1PP4/PP1QPq2/2KR1BNR b k - 0 10",
+      "nodes": null
+    },
+    {
+      "ply": 20,
+      "uci": "c8g4",
+      "san": "Bxg4",
+      "fen": "4k1nr/rpp2ppp/p1n5/b2pp3/6bP/N1PP4/PP1QPq2/2KR1BNR w k - 0 11",
+      "nodes": 169
+    },
+    {
+      "ply": 21,
+      "uci": "c1c2",
+      "san": "Kc2",
+      "fen": "4k1nr/rpp2ppp/p1n5/b2pp3/6bP/N1PP4/PPKQPq2/3R1BNR b k - 1 11",
+      "nodes": null
+    },
+    {
+      "ply": 22,
+      "uci": "e8d7",
+      "san": "Kd7",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PP4/PPKQPq2/3R1BNR w - - 2 12",
+      "nodes": 389
+    },
+    {
+      "ply": 23,
+      "uci": "d2e1",
+      "san": "Qe1",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PP4/PPK1Pq2/3RQBNR b - - 3 12",
+      "nodes": null
+    },
+    {
+      "ply": 24,
+      "uci": "f2e3",
+      "san": "Qe3",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PPq3/PPK1P3/3RQBNR w - - 4 13",
+      "nodes": 166
+    },
+    {
+      "ply": 25,
+      "uci": "e1g3",
+      "san": "Qg3",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PPq1Q1/PPK1P3/3R1BNR b - - 5 13",
+      "nodes": null
+    },
+    {
+      "ply": 26,
+      "uci": "e3g3",
+      "san": "Qxg3",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PP2q1/PPK1P3/3R1BNR w - - 0 14",
+      "nodes": 156
+    },
+    {
+      "ply": 27,
+      "uci": "d1b1",
+      "san": "Rb1",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PP2q1/PPK1P3/1R3BNR b - - 1 14",
+      "nodes": null
+    },
+    {
+      "ply": 28,
+      "uci": "g3e3",
+      "san": "Qe3",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PPq3/PPK1P3/1R3BNR w - - 2 15",
+      "nodes": 238
+    },
+    {
+      "ply": 29,
+      "uci": "b1d1",
+      "san": "Rd1",
+      "fen": "6nr/rppk1ppp/p1n5/b2pp3/6bP/N1PPq3/PPK1P3/3R1BNR b - - 3 15",
+      "nodes": null
+    },
+    {
+      "ply": 30,
+      "uci": "g8f6",
+      "san": "Nf6",
+      "fen": "7r/rppk1ppp/p1n2n2/b2pp3/6bP/N1PPq3/PPK1P3/3R1BNR w - - 4 16",
+      "nodes": 383
+    },
+    {
+      "ply": 31,
+      "uci": "c2b1",
+      "san": "Kb1",
+      "fen": "7r/rppk1ppp/p1n2n2/b2pp3/6bP/N1PPq3/PP2P3/1K1R1BNR b - - 5 16",
+      "nodes": null
+    },
+    {
+      "ply": 32,
+      "uci": "a7a8",
+      "san": "Raa8",
+      "fen": "r6r/1ppk1ppp/p1n2n2/b2pp3/6bP/N1PPq3/PP2P3/1K1R1BNR w - - 6 17",
+      "nodes": 248
+    },
+    {
+      "ply": 33,
+      "uci": "a3c2",
+      "san": "Nc2",
+      "fen": "r6r/1ppk1ppp/p1n2n2/b2pp3/6bP/2PPq3/PPN1P3/1K1R1BNR b - - 7 17",
+      "nodes": null
+    },
+    {
+      "ply": 34,
+      "uci": "e3f2",
+      "san": "Qf2",
+      "fen": "r6r/1ppk1ppp/p1n2n2/b2pp3/6bP/2PP4/PPN1Pq2/1K1R1BNR w - - 8 18",
+      "nodes": 189
+    },
+    {
+      "ply": 35,
+      "uci": "d1c1",
+      "san": "Rc1",
+      "fen": "r6r/1ppk1ppp/p1n2n2/b2pp3/6bP/2PP4/PPN1Pq2/1KR2BNR b - - 9 18",
+      "nodes": null
+    },
+    {
+      "ply": 36,
+      "uci": "d7d6",
+      "san": "Kd6",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/6bP/2PP4/PPN1Pq2/1KR2BNR w - - 10 19",
+      "nodes": 345
+    },
+    {
+      "ply": 37,
+      "uci": "h1h2",
+      "san": "Rh2",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/6bP/2PP4/PPN1Pq1R/1KR2BN1 b - - 11 19",
+      "nodes": null
+    },
+    {
+      "ply": 38,
+      "uci": "f2h2",
+      "san": "Qxh2",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/6bP/2PP4/PPN1P2q/1KR2BN1 w - - 0 20",
+      "nodes": 194
+    },
+    {
+      "ply": 39,
+      "uci": "c1e1",
+      "san": "Re1",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/6bP/2PP4/PPN1P2q/1K2RBN1 b - - 1 20",
+      "nodes": null
+    },
+    {
+      "ply": 40,
+      "uci": "h2g1",
+      "san": "Qxg1",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/6bP/2PP4/PPN1P3/1K2RBq1 w - - 0 21",
+      "nodes": 131
+    },
+    {
+      "ply": 41,
+      "uci": "c3c4",
+      "san": "c4",
+      "fen": "r6r/1pp2ppp/p1nk1n2/b2pp3/2P3bP/3P4/PPN1P3/1K2RBq1 b - - 0 21",
+      "nodes": null
+    },
+    {
+      "ply": 42,
+      "uci": "a5e1",
+      "san": "Bxe1",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3pp3/2P3bP/3P4/PPN1P3/1K2bBq1 w - - 0 22",
+      "nodes": 180
+    },
+    {
+      "ply": 43,
+      "uci": "c2b4",
+      "san": "Nb4",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3pp3/1NP3bP/3P4/PP2P3/1K2bBq1 b - - 1 22",
+      "nodes": null
+    },
+    {
+      "ply": 44,
+      "uci": "e1b4",
+      "san": "Bxb4",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3pp3/1bP3bP/3P4/PP2P3/1K3Bq1 w - - 0 23",
+      "nodes": 152
+    },
+    {
+      "ply": 45,
+      "uci": "c4d5",
+      "san": "cxd5",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3Pp3/1b4bP/3P4/PP2P3/1K3Bq1 b - - 0 23",
+      "nodes": null
+    },
+    {
+      "ply": 46,
+      "uci": "g1f1",
+      "san": "Qxf1+",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3Pp3/1b4bP/3P4/PP2P3/1K3q2 w - - 0 24",
+      "nodes": 124
+    },
+    {
+      "ply": 47,
+      "uci": "b1c2",
+      "san": "Kc2",
+      "fen": "r6r/1pp2ppp/p1nk1n2/3Pp3/1b4bP/3P4/PPK1P3/5q2 b - - 1 24",
+      "nodes": null
+    },
+    {
+      "ply": 48,
+      "uci": "c6d4",
+      "san": "Nd4#",
+      "fen": "r6r/1pp2ppp/p2k1n2/3Pp3/1b1n2bP/3P4/PPK1P3/5q2 w - - 2 25",
+      "nodes": 131
+    }
+  ]
+}

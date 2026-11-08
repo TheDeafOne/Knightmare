@@ -1,0 +1,9 @@
+[Event "Knightmare demonstration"]
+[Site "?"]
+[Date "2026.11.08"]
+[Round "?"]
+[White "Seeded random"]
+[Black "Knightmare depth 2"]
+[Result "0-1"]
+
+1. d3 e5 2. Be3 Bb4+ 3. c3 Ba5 4. h4 a6 5. Na3 Qf6 6. Qc2 Nc6 7. Ba7 Rxa7 8. O-O-O Qxf2 9. Qd2 d5 10. g4 Bxg4 11. Kc2 Kd7 12. Qe1 Qe3 13. Qg3 Qxg3 14. Rb1 Qe3 15. Rd1 Nf6 16. Kb1 Raa8 17. Nc2 Qf2 18. Rc1 Kd6 19. Rh2 Qxh2 20. Re1 Qxg1 21. c4 Bxe1 22. Nb4 Bxb4 23. cxd5 Qxf1+ 24. Kc2 Nd4# 0-1
