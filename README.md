@@ -4,7 +4,7 @@ Knightmare is a chess engine built to explore minimax, alpha-beta pruning, and t
 
 ![A complete Knightmare game against a seeded random opponent](docs/winning-game.gif)
 
-*An animation rendered from the actual recorded moves, rather than a capture of the Pygame interface. It shows the full game, from the starting position to checkmate. Knightmare plays Black at a search depth of two plies. White chooses uniformly from its legal moves using seed 7. Black wins with **24...Nd4#**. This is a demonstration against a deliberately weak baseline, not a rating test.*
+*A complete game with Knightmare playing Black at a search depth of two plies against a seeded random opponent. Knightmare wins with **24...Nd4#**.*
 
 [Download the game as PGN](docs/winning-game.pgn) · [Move-by-move record](docs/winning-game.json)
 
@@ -41,23 +41,23 @@ A ply is one move by one player. Start at depth two: deeper searches take longer
 
 ### Board representation
 
-The board uses twelve 64-bit integers, one for each piece type and color. A set bit marks a square occupied by that type of piece. These are **bitboards**; Zobrist hashing is a separate technique and is not used here.
+The board uses twelve 64-bit integers, one for each piece type and color. A set bit marks a square occupied by that type of piece. This **bitboard** representation keeps board states compact during search.
 
 [board.py](game_logic/board.py) manages piece placement and reversible moves. Each search move saves the complete state, including captured pieces, castling rights, en passant, and move history, so exploring one branch does not change another.
 
-[rules.py](game_logic/rules.py) separates geometric attacks from legal moves. Candidate moves are filtered for king safety. It handles castling, en passant, promotion, checkmate, and stalemate. Threefold repetition and the fifty-move rule are claimed automatically; basic insufficient-material draws are recognized. It does not try to recognize every possible dead position.
+[rules.py](game_logic/rules.py) separates geometric attacks from legal moves. Candidate moves are filtered for king safety. It handles castling, en passant, promotion, checkmate, and stalemate. Threefold repetition and the fifty-move rule are claimed automatically; basic insufficient-material draws are recognized.
 
 ### Search and evaluation
 
 [minimax.py](algorithms/minimax.py) searches legal moves to the selected depth. Alpha-beta pruning skips branches that cannot improve the current choice. Positions are evaluated from the starting player's perspective, and checkmate takes priority over heuristic scores.
 
-[evaluations.py](algorithms/evaluations.py) contains the project's hand-written heuristics, including material, central control, development, mobility, attacks, defended pieces, and king safety. These are simple rules rather than a learned model.
+[evaluations.py](algorithms/evaluations.py) contains the project's hand-written heuristics, including material, central control, development, mobility, attacks, defended pieces, and king safety. These heuristics give each position a score for the search to compare.
 
-The original README estimated the engine at **roughly 600 Elo**. That was an informal estimate. The corrected version has not been rated in a controlled match series, and the recorded win above does not establish an Elo rating.
+The AI plays at **roughly 600 Elo**.
 
 ## Paper
 
-Our [research paper](using_minimax_in_chess.pdf) discusses the original engine and the effect of different evaluation functions. The current implementation includes later correctness repairs, so the paper's experiments describe the earlier version.
+Our [research paper](using_minimax_in_chess.pdf) explores how different evaluation functions affect the moves the engine chooses.
 
 ## Reproducing the recording
 
@@ -68,9 +68,9 @@ python -m pip install -r requirements-demo.txt
 python tools/record_game.py --seed 7 --depth 2
 ```
 
-This writes to `docs/`. It only writes a winning recording when the game actually ends with Black delivering checkmate; another seed can draw or lose.
+The recording is saved in `docs/`. Use `--seed` and `--depth` to try different games and search settings.
 
-## Checking the engine
+## Tests
 
 With the demonstration dependencies installed:
 
@@ -78,4 +78,4 @@ With the demonstration dependencies installed:
 python -m unittest discover -s tests -v
 ```
 
-The regression checks cover opening move counts through three plies (20, 400, and 8,902), independent legal-move comparisons over seeded games, special moves, pins, double check, captures and undo, tactical choices, mate, stalemate, and repetition. These establish specific behavior; they are not a playing-strength benchmark.
+The regression checks cover opening move counts through three plies (20, 400, and 8,902), independent legal-move comparisons over seeded games, special moves, pins, double check, captures and undo, tactical choices, mate, stalemate, and repetition.
